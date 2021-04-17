@@ -4,13 +4,13 @@ public class SHA3 {
 
     // state context
     public static byte[] b = new byte[200];
-    int pt, rsiz, mdlen;
+    static int pt, rsiz, mdlen;
 
     public static long ROTL64(long x, long y) {
         return (((x) << (y)) | ((x) >>> (64 - (y))));
     }
 
-    void sha3_keccakf(long st[25])
+    static void sha3_keccakf(long st[25])
     {
         // constants
         long[/*24*/] keccakf_rndc = {
@@ -103,7 +103,7 @@ public class SHA3 {
 
     // Initialize the context for SHA3
 
-    void sha3_init(int mdlen)
+    static void sha3_init(int mdlen)
     {
         int i;
 
@@ -116,78 +116,75 @@ public class SHA3 {
 
     // update state with more data
 
-    int sha3_update(sha3_ctx_t *c, const void *data, size_t len)
+    static void sha3_update(byte[] data, int len)
     {
-        size_t i;
+        int i;
         int j;
 
-        j = c->pt;
+        j = pt;
         for (i = 0; i < len; i++) {
-            c->st.b[j++] ^= ((const uint8_t *) data)[i];
-            if (j >= c->rsiz) {
+            b[j++] ^= data[i];
+            if (j >= rsiz) {
                 sha3_keccakf(c->st.q);
                 j = 0;
             }
         }
-        c->pt = j;
-
-        return 1;
+        pt = j;
     }
 
     // finalize and output a hash
 
-    int sha3_final(void *md, sha3_ctx_t *c)
+    static byte[] sha3_final(byte[] md)
     {
         int i;
 
-        c->st.b[c->pt] ^= 0x06;
-        c->st.b[c->rsiz - 1] ^= 0x80;
+        b[pt] ^= 0x06;
+        b[rsiz - 1] ^= 0x80;
         sha3_keccakf(c->st.q);
 
-        for (i = 0; i < c->mdlen; i++) {
-            ((uint8_t *) md)[i] = c->st.b[i];
+        for (i = 0; i < mdlen; i++) {
+            md[i] = b[i];
         }
 
-        return 1;
+        return md;
     }
 
     // compute a SHA-3 hash (md) of given byte length from "in"
 
-    void *sha3(const void *in, size_t inlen, void *md, int mdlen)
+    static byte[] sha3(byte[] in, int inlen, byte[] md, int mdlen)
     {
-        sha3_ctx_t sha3;
 
-        sha3_init(&sha3, mdlen);
-        sha3_update(&sha3, in, inlen);
-        sha3_final(md, &sha3);
+        sha3_init(mdlen);
+        sha3_update(in, inlen);
+        md = sha3_final(md);
 
         return md;
     }
 
     // SHAKE128 and SHAKE256 extensible-output functionality
 
-    void shake_xof(sha3_ctx_t *c)
+    static void shake_xof()
     {
-        c->st.b[c->pt] ^= 0x1F;
-        c->st.b[c->rsiz - 1] ^= 0x80;
+        b[pt] ^= 0x1F;
+        b[rsiz - 1] ^= 0x80;
         sha3_keccakf(c->st.q);
-        c->pt = 0;
+        pt = 0;
     }
 
-    void shake_out(sha3_ctx_t *c, void *out, size_t len)
+    static void shake_out(byte[] out, int len)
     {
-        size_t i;
+        int i;
         int j;
 
-        j = c->pt;
+        j = pt;
         for (i = 0; i < len; i++) {
-            if (j >= c->rsiz) {
+            if (j >= rsiz) {
                 sha3_keccakf(c->st.q);
                 j = 0;
             }
-            ((uint8_t *) out)[i] = c->st.b[j++];
+            out[i] = b[j++];
         }
-        c->pt = j;
+        pt = j;
     }
 
 
