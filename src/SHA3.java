@@ -1,4 +1,5 @@
 public class SHA3 {
+    //SHA-3 implementation converted from C to Java from https://github.com/mjosaarinen/tiny_sha3
     public static final int KECCAKF_ROUNDS 24
 
     // state context
