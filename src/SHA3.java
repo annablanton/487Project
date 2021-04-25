@@ -125,7 +125,7 @@ public class SHA3 {
 
         for (i = 0; i < 200; i++)
             b[i] = 0;
-        mdlen = mdlen;
+        this.mdlen = mdlen;
         rsiz = 200 - 2 * mdlen;
         pt = 0;
     }
