@@ -111,13 +111,13 @@ public class SHA3 {
 
     // Initialize the context for SHA3
 
-    static void sha3_init(int mdlen)
+    static void sha3_init(int _mdlen)
     {
         int i;
 
         for (i = 0; i < 200; i++)
             b[i] = 0;
-        mdlen = mdlen;
+        mdlen = _mdlen;
         rsiz = 200 - 2 * mdlen;
         pt = 0;
     }
