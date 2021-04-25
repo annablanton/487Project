@@ -30,9 +30,9 @@ public class SHA3 {
             15, 23, 19, 13, 12, 2, 20, 14, 22, 9,  6,  1
     };
 
-    public static long ROTL64(long x, int y) {
-        return (x << y) | (x >>> (64 - (y)));
-    }
+//    public static long ROTL64(long x, int y) {
+//        return (x << y) | (x >>> (64 - (y)));
+//    }
 
     private static void sha3_keccakf(byte[/*200*/] v){
         long[] st = new long[25];

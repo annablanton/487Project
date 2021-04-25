@@ -16,7 +16,7 @@ public class Driver {
     {
         int i, h, l;
 
-        for (i = 0; i < maxbytes; i++) {
+        for (i = 0; 2 * i + 1 < str.length(); i++) {
             h = test_hexdigit(str.charAt(2 * i));
             if (h < 0)
                 return i;
@@ -84,9 +84,10 @@ public class Driver {
 
             test_sha3.sha3(msg, msg_len, buf, sha_len);
 
-            if (memcmp(sha, buf, sha_len) != 0) {
-                fprintf(stderr, "[%d] SHA3-%d, len %d test FAILED.\n",
-                        i, sha_len * 8, msg_len);
+            if (!Arrays.equals(sha, buf)) {
+                System.out.println("[" + i + "] SHA3-" + sha_len * 8 + ", len " + msg_len + " test FAILED.\n");
+                System.out.println(Arrays.toString(sha));
+                System.out.println(Arrays.toString(buf));
                 fails++;
             }
         }
@@ -96,40 +97,40 @@ public class Driver {
 
 // test speed of the comp
 
-    static void test_speed()
-    {
-        int i;
-        long[/*25*/] st, x, n;
-        clock_t bg, us;
-
-        for (i = 0; i < 25; i++)
-            st[i] = i;
-
-        bg = clock();
-        n = 0;
-        do {
-            for (i = 0; i < 100000; i++)
-                sha3_keccakf(st);
-            n += i;
-            us = clock() - bg;
-        } while (us < 3 * CLOCKS_PER_SEC);
-
-        x = 0;
-        for (i = 0; i < 25; i++)
-            x += st[i];
-
-        printf("(%016lX) %.3f Keccak-p[1600,24] / Second.\n",
-                (unsigned long) x, (CLOCKS_PER_SEC * ((double) n)) / ((double) us));
-
-
-    }
+//    static void test_speed()
+//    {
+//        int i;
+//        long[/*25*/] st, x, n;
+//        clock_t bg, us;
+//
+//        for (i = 0; i < 25; i++)
+//            st[i] = i;
+//
+//        bg = clock();
+//        n = 0;
+//        do {
+//            for (i = 0; i < 100000; i++)
+//                sha3_keccakf(st);
+//            n += i;
+//            us = clock() - bg;
+//        } while (us < 3 * CLOCKS_PER_SEC);
+//
+//        x = 0;
+//        for (i = 0; i < 25; i++)
+//            x += st[i];
+//
+//        printf("(%016lX) %.3f Keccak-p[1600,24] / Second.\n",
+//                (unsigned long) x, (CLOCKS_PER_SEC * ((double) n)) / ((double) us));
+//
+//
+//    }
 
     // main
     public static void main(String[] args)
     {
         if (test_sha3() == 0)
             System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
-        test_speed();
+        //test_speed();
     }
 
 }
