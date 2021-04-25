@@ -1,6 +1,6 @@
 public class SHA3 {
     //SHA-3 implementation converted from C to Java from https://github.com/mjosaarinen/tiny_sha3
-    public static final int KECCAKF_ROUNDS = 24;
+    public static final int KECCAKF_ROUNDS 24
 
     // state context
     public static byte[] b = new byte[200];
@@ -10,7 +10,7 @@ public class SHA3 {
         return (((x) << (y)) | ((x) >>> (64 - (y))));
     }
 
-    static void sha3_keccakf(byte[/*200*/] v)
+    static void sha3_keccakf(long st[25])
     {
         // constants
         long[/*24*/] keccakf_rndc = {
@@ -33,80 +33,72 @@ public class SHA3 {
         };
 
         // variables
-//        int i, j, r;
+        int i, j, r;
         long t;
-        long[] q = new long[25];
-        long[/*5*/] bc = new long[5];
+        long[/*5*/] bc;
 
-//        #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-//            uint8_t *v;
-        // map from bytes (in v[]) to longs (in q[])
-        for (int i = 0, j = 0; i < 25; i++, j += 8) {
-            q[i] =  (((long)v[j    ] & 0xFFL)      ) | (((long)v[j + 1] & 0xFFL) <<  8) |
-                    (((long)v[j + 2] & 0xFFL) << 16) | (((long)v[j + 3] & 0xFFL) << 24) |
-                    (((long)v[j + 4] & 0xFFL) << 32) | (((long)v[j + 5] & 0xFFL) << 40) |
-                    (((long)v[j + 6] & 0xFFL) << 48) | (((long)v[j + 7] & 0xFFL) << 56);
-        }
+        #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+            uint8_t *v;
+
             // endianess conversion. this is redundant on little-endian targets
-//            for (i = 0; i < 25; i++) {
-//                v = (uint8_t *) &st[i];
-//                st[i] = ((uint64_t) v[0])     | (((uint64_t) v[1]) << 8) |
-//                        (((uint64_t) v[2]) << 16) | (((uint64_t) v[3]) << 24) |
-//                        (((uint64_t) v[4]) << 32) | (((uint64_t) v[5]) << 40) |
-//                        (((uint64_t) v[6]) << 48) | (((uint64_t) v[7]) << 56);
-//            }
-////        #endif
+            for (i = 0; i < 25; i++) {
+                v = (uint8_t *) &st[i];
+                st[i] = ((uint64_t) v[0])     | (((uint64_t) v[1]) << 8) |
+                        (((uint64_t) v[2]) << 16) | (((uint64_t) v[3]) << 24) |
+                        (((uint64_t) v[4]) << 32) | (((uint64_t) v[5]) << 40) |
+                        (((uint64_t) v[6]) << 48) | (((uint64_t) v[7]) << 56);
+            }
+        #endif
 
         // actual iteration
-        for (int r = 0; r < KECCAKF_ROUNDS; r++) {
+        for (r = 0; r < KECCAKF_ROUNDS; r++) {
 
             // Theta
-            for (int i = 0; i < 5; i++)
-                bc[i] = q[i] ^ q[i + 5] ^ q[i + 10] ^ q[i + 15] ^ q[i + 20];
+            for (i = 0; i < 5; i++)
+                bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
 
-            for (int i = 0; i < 5; i++) {
+            for (i = 0; i < 5; i++) {
                 t = bc[(i + 4) % 5] ^ ROTL64(bc[(i + 1) % 5], 1);
-                for (int j = 0; j < 25; j += 5)
-                    q[j + i] ^= t;
+                for (j = 0; j < 25; j += 5)
+                    st[j + i] ^= t;
             }
 
             // Rho Pi
-            t = q[1];
-            for (int i = 0; i < 24; i++) {
-                int j = keccakf_piln[i];
-                bc[0] = q[j];
-                q[j] = ROTL64(t, keccakf_rotc[i]);
+            t = st[1];
+            for (i = 0; i < 24; i++) {
+                j = keccakf_piln[i];
+                bc[0] = st[j];
+                st[j] = ROTL64(t, keccakf_rotc[i]);
                 t = bc[0];
             }
 
             //  Chi
-            for (int j = 0; j < 25; j += 5) {
-                for (int i = 0; i < 5; i++)
-                    bc[i] = q[j + i];
-                for (int i = 0; i < 5; i++)
-                    q[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
+            for (j = 0; j < 25; j += 5) {
+                for (i = 0; i < 5; i++)
+                    bc[i] = st[j + i];
+                for (i = 0; i < 5; i++)
+                    st[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
             }
 
             //  Iota
-            q[0] ^= keccakf_rndc[r];
+            st[0] ^= keccakf_rndc[r];
         }
 
-//        #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-
-        // endianess conversion. this is redundant on little-endian targets
-            for (int i = 0, j = 0; i < 25; i++, j += 8) {
-
-                t = q[i];
-                v[j    ] = (byte)(t & 0xFF);
-                v[j + 1] = (byte)((t >> 8) & 0xFF);
-                v[j + 2] = (byte)((t >> 16) & 0xFF);
-                v[j + 3] = (byte)((t >> 24) & 0xFF);
-                v[j + 4] = (byte)((t >> 32) & 0xFF);
-                v[j + 5] = (byte)((t >> 40) & 0xFF);
-                v[j + 6] = (byte)((t >> 48) & 0xFF);
-                v[j + 7] = (byte)((t >> 56) & 0xFF);
+        #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+            // endianess conversion. this is redundant on little-endian targets
+            for (i = 0; i < 25; i++) {
+                v = (uint8_t *) &st[i];
+                t = st[i];
+                v[0] = t & 0xFF;
+                v[1] = (t >>> 8) & 0xFF;
+                v[2] = (t >>> 16) & 0xFF;
+                v[3] = (t >>> 24) & 0xFF;
+                v[4] = (t >>> 32) & 0xFF;
+                v[5] = (t >>> 40) & 0xFF;
+                v[6] = (t >>> 48) & 0xFF;
+                v[7] = (t >>> 56) & 0xFF;
             }
-//        #endif
+        #endif
     }
 
     // Initialize the context for SHA3
@@ -117,7 +109,7 @@ public class SHA3 {
 
         for (i = 0; i < 200; i++)
             b[i] = 0;
-        mdlen = mdlen;
+        this.mdlen = mdlen;
         rsiz = 200 - 2 * mdlen;
         pt = 0;
     }
@@ -133,7 +125,7 @@ public class SHA3 {
         for (i = 0; i < len; i++) {
             b[j++] ^= data[i];
             if (j >= rsiz) {
-                sha3_keccakf(b);
+                sha3_keccakf(c->st.q);
                 j = 0;
             }
         }
@@ -148,7 +140,7 @@ public class SHA3 {
 
         b[pt] ^= 0x06;
         b[rsiz - 1] ^= 0x80;
-        sha3_keccakf(b);
+        sha3_keccakf(c->st.q);
 
         for (i = 0; i < mdlen; i++) {
             md[i] = b[i];
@@ -175,7 +167,7 @@ public class SHA3 {
     {
         b[pt] ^= 0x1F;
         b[rsiz - 1] ^= 0x80;
-        sha3_keccakf(b);
+        sha3_keccakf(c->st.q);
         pt = 0;
     }
 
@@ -187,7 +179,7 @@ public class SHA3 {
         j = pt;
         for (i = 0; i < len; i++) {
             if (j >= rsiz) {
-                sha3_keccakf(b);
+                sha3_keccakf(c->st.q);
                 j = 0;
             }
             out[i] = b[j++];
