@@ -11,6 +11,7 @@ public class SHA3 {
         return (((x) << (y)) | ((x) >>> (64 - (y))));
     }
 
+
     private static final long[/*24*/] keccakf_rndc = {
             0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
             0x8000000080008000L, 0x000000000000808bL, 0x0000000080000001L,
@@ -35,79 +36,85 @@ public class SHA3 {
     }
 
     private static void sha3_keccakf(byte[/*200*/] v){
-        long[] st = new long[25];
+        long[] q = new long[25];
         long[] bc = new long[5];
 
         // variables
-        int i, j, r;
+//        int i, j, r;
         long t;
 
-        // #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-        //     uint8_t *v;
-        // endianess conversion. this is redundant on little-endian targets
-        for (i = 0, j =0; i < 25; i++, j +=8) {
-            // v = (uint8_t *) &st[i];
-            st[i] =  (((long)v[j + 0] & 0xFFL)) | (((long)v[j + 1] & 0xFFL) <<  8) |
+//        #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+//            uint8_t *v;
+        // map from bytes (in v[]) to longs (in q[])
+        for (int i = 0, j = 0; i < 25; i++, j += 8) {
+            q[i] =  (((long)v[j    ] & 0xFFL)      ) | (((long)v[j + 1] & 0xFFL) <<  8) |
                     (((long)v[j + 2] & 0xFFL) << 16) | (((long)v[j + 3] & 0xFFL) << 24) |
                     (((long)v[j + 4] & 0xFFL) << 32) | (((long)v[j + 5] & 0xFFL) << 40) |
                     (((long)v[j + 6] & 0xFFL) << 48) | (((long)v[j + 7] & 0xFFL) << 56);
         }
+
         // #endif
+        // endianess conversion. this is redundant on little-endian targets
+//            for (i = 0; i < 25; i++) {
+//                v = (uint8_t *) &st[i];
+//                st[i] = ((uint64_t) v[0])     | (((uint64_t) v[1]) << 8) |
+//                        (((uint64_t) v[2]) << 16) | (((uint64_t) v[3]) << 24) |
+//                        (((uint64_t) v[4]) << 32) | (((uint64_t) v[5]) << 40) |
+//                        (((uint64_t) v[6]) << 48) | (((uint64_t) v[7]) << 56);
+//            }
+////        #endif
+
 
         // actual iteration
-        for (r = 0; r < KECCAKF_ROUNDS; r++) {
+        for (int r = 0; r < KECCAKF_ROUNDS; r++) {
 
             // Theta
-            for (i = 0; i < 5; i++){
-                bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
+            for (int i = 0; i < 5; i++)
+                bc[i] = q[i] ^ q[i + 5] ^ q[i + 10] ^ q[i + 15] ^ q[i + 20];
 
-            }
-
-            for (i = 0; i < 5; i++) {
+            for (int i = 0; i < 5; i++) {
                 t = bc[(i + 4) % 5] ^ ROTL64(bc[(i + 1) % 5], 1);
-                for (j = 0; j < 25; j += 5){
-                    st[j + i] ^= t;
-                }
+                for (int j = 0; j < 25; j += 5)
+                    q[j + i] ^= t;
             }
 
             // Rho Pi
-            t = st[1];
-            for (i = 0; i < 24; i++) {
-                j = keccakf_piln[i];
-                bc[0] = st[j];
-                st[j] = ROTL64(t, keccakf_rotc[i]);
+            t = q[1];
+            for (int i = 0; i < 24; i++) {
+                int j = keccakf_piln[i];
+                bc[0] = q[j];
+                q[j] = ROTL64(t, keccakf_rotc[i]);
                 t = bc[0];
             }
 
             //  Chi
-            for (j = 0; j < 25; j += 5) {
-                for (i = 0; i < 5; i++){
-                    bc[i] = st[j + i];
-                }
-                for (i = 0; i < 5; i++){
-                    st[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
-                }
+            for (int j = 0; j < 25; j += 5) {
+                for (int i = 0; i < 5; i++)
+                    bc[i] = q[j + i];
+                for (int i = 0; i < 5; i++)
+                    q[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
             }
 
             //  Iota
-            st[0] ^= keccakf_rndc[r];
+            q[0] ^= keccakf_rndc[r];
         }
 
-        // #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+//        #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+
         // endianess conversion. this is redundant on little-endian targets
-        for (i = 0, j = 0 ; i < 25; i++, j+=8) {
-            // v = (uint8_t *) &st[i];
-            t = st[i];
-            v[0] = (byte)(t & 0xFF);
-            v[1] = (byte)((t >>> 8) & 0xFF);
-            v[2] = (byte)((t >>> 16) & 0xFF);
-            v[3] = (byte)((t >>> 24) & 0xFF);
-            v[4] = (byte)((t >>> 32) & 0xFF);
-            v[5] = (byte)((t >>> 40) & 0xFF);
-            v[6] = (byte)((t >>> 48) & 0xFF);
-            v[7] = (byte)((t >>> 56) & 0xFF);
+        for (int i = 0, j = 0; i < 25; i++, j += 8) {
+
+            t = q[i];
+            v[j    ] = (byte)(t & 0xFF);
+            v[j + 1] = (byte)((t >> 8) & 0xFF);
+            v[j + 2] = (byte)((t >> 16) & 0xFF);
+            v[j + 3] = (byte)((t >> 24) & 0xFF);
+            v[j + 4] = (byte)((t >> 32) & 0xFF);
+            v[j + 5] = (byte)((t >> 40) & 0xFF);
+            v[j + 6] = (byte)((t >> 48) & 0xFF);
+            v[j + 7] = (byte)((t >> 56) & 0xFF);
         }
-        // #endif
+//        #endif
     }
 
     // Initialize the context for SHA3
@@ -118,7 +125,7 @@ public class SHA3 {
 
         for (i = 0; i < 200; i++)
             b[i] = 0;
-        this.mdlen = mdlen;
+        mdlen = mdlen;
         rsiz = 200 - 2 * mdlen;
         pt = 0;
     }
