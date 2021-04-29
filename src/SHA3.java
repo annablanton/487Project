@@ -35,7 +35,7 @@ public class SHA3 {
         return (x << y) | (x >>> (64 - (y)));
     }
 
-    private static void sha3_keccakf(byte[/*200*/] v){
+    protected static void sha3_keccakf(byte[/*200*/] v){
         long[] q = new long[25];
         long[] bc = new long[5];
 
@@ -173,32 +173,6 @@ public class SHA3 {
         sha3_final(md);
 
         return md;
-    }
-
-    // SHAKE128 and SHAKE256 extensible-output functionality
-
-    void shake_xof()
-    {
-        b[pt] ^= (byte) (this.ext ? 0x04 : 0x1F);
-        b[rsiz - 1] ^= 0x80;
-        sha3_keccakf(b);
-        pt = 0;
-    }
-
-    void shake_out(byte[] out, int len)
-    {
-        int i;
-        int j;
-
-        j = pt;
-        for (i = 0; i < len; i++) {
-            if (j >= rsiz) {
-                sha3_keccakf(b);
-                j = 0;
-            }
-            out[i] = b[j++];
-        }
-        pt = j;
     }
 
 
