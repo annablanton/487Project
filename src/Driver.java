@@ -321,7 +321,13 @@ public class Driver {
     }
 
     public static void computeHashOfInput(Scanner userInput) {
-        throw new UnsupportedOperationException("Computing hash of input not yet supported");
+        System.out.print("Please enter the text to be decrypted: ");
+        String userInputText = userInput.next();
+
+        KMACXOF256 kmac = new KMACXOF256();
+        byte[] md = new byte[64];
+        kmac.kmacxof256("".getBytes(),userInputText.getBytes(), 512, md, md.length, "D".getBytes());
+        System.out.println(bytesToHex(md));
     }
 
     public static void computeMAC(Scanner userInput) {
