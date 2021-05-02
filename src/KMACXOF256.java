@@ -1,6 +1,6 @@
 public class KMACXOF256 extends cSHAKE256 {
     public byte[] kmacxof256(byte[] k, byte[] in, int inlen, byte[] md, int mdlen, byte[] s) {
-        byte[] newX = bytepad(encode_string(k), 168);
+        byte[] newX = bytepad(encode_string(k), 136);
         newX = concat(newX, in);
         newX = concat(newX, right_encode(0));
         return cshake256(newX, newX.length, md, mdlen, "KMAC".getBytes(), s);

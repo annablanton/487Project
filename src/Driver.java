@@ -1,6 +1,13 @@
-import java.util.Arrays;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.*;
 
 public class Driver {
+    private static SecureRandom rand = new SecureRandom();
+    private static Map<Integer, Character> HEX_MAP;
     static int test_hexdigit(char ch)
     {
         if (ch >= '0' && ch <= '9')
@@ -177,12 +184,241 @@ public class Driver {
 //
 //    }
 
+    public static void computeHashOfFile(Scanner userInput) throws FileNotFoundException {
+        System.out.print("Please enter the filepath: ");
+        String filePath = userInput.next();
+        byte[] md = new byte[64];
+        KMACXOF256 kmac = new KMACXOF256();
+        Scanner file = new Scanner(new File(filePath));
+        int fileLength = 0;
+        while (file.hasNextLine()) {
+            fileLength += file.nextLine().length();
+            if (file.hasNext()) fileLength++;
+        }
+
+        byte[] fileArray = new byte[fileLength];
+        int i = 0;
+        file = new Scanner(new File(filePath));
+        while (file.hasNextLine()) {
+            String line = file.nextLine();
+            for (int j = 0; j < line.length(); j++) {
+                fileArray[i] = (byte) line.charAt(j);
+                i++;
+            }
+            if (file.hasNext()) {
+                fileArray[i] = (byte) '\n';
+                i++;
+            }
+        }
+        kmac.kmacxof256(new byte[]{}, fileArray, fileArray.length, md, md.length, "D".getBytes());
+        System.out.println(bytesToHex(md));
+    }
+
+    public static void encryptFile(Scanner userInput) throws IOException {
+        System.out.print("Please enter the filepath for the file to be encrypted: ");
+        String filePath = userInput.next();
+        System.out.print("Please enter the passphrase: ");
+        String key = userInput.next();
+        int z = rand.nextInt(512);
+        byte[] zArray = new byte[2];
+        zArray[0] = (byte) ((z & 0xFF00) >>> 8);
+        zArray[1] = (byte) (z & 0x00FF);
+        byte[] ke_ka = new byte[128];
+        KMACXOF256 kmac = new KMACXOF256();
+        Scanner file = new Scanner(new File(filePath));
+        int fileLength = 0;
+        while (file.hasNextLine()) {
+            fileLength += file.nextLine().length();
+            if (file.hasNext()) fileLength++;
+        }
+
+        byte[] fileArray = new byte[fileLength];
+        int i = 0;
+        file = new Scanner(new File(filePath));
+        while (file.hasNextLine()) {
+            String line = file.nextLine();
+            for (int j = 0; j < line.length(); j++) {
+                fileArray[i] = (byte) line.charAt(j);
+                i++;
+            }
+            if (file.hasNext()) {
+                fileArray[i] = (byte) '\n';
+                i++;
+            }
+        }
+
+        kmac.kmacxof256(concat(zArray, key.getBytes()), new byte[]{}, 0, ke_ka, ke_ka.length, "S".getBytes());
+        byte[] ke = Arrays.copyOfRange(ke_ka, 0, 64);
+        byte[] ka = Arrays.copyOfRange(ke_ka, 64, 128);
+        byte[] c = new byte[fileLength];
+        kmac.kmacxof256(ke, new byte[]{}, 0, c, c.length, "SKE".getBytes());
+        for (i = 0; i < c.length; i++) {
+            c[i] ^= fileArray[i];
+        }
+
+        byte[] t = new byte[64];
+        kmac.kmacxof256(ka, fileArray, fileArray.length, t, t.length, "SKA".getBytes());
+        FileWriter output = new FileWriter(new File("./cryptogram.txt"), false);
+        output.append(bytesToHex(zArray) + "\n");
+        output.append(bytesToHex(c) + "\n");
+        output.append(bytesToHex(t));
+        output.close();
+
+    }
+
+    public static void decryptFile(Scanner userInput) throws IOException {
+        System.out.print("Please enter the filepath of the cryptogram to be decrypted: ");
+        String filePath = userInput.next();
+        System.out.print("Please enter the passphrase: ");
+        String key = userInput.next();
+        Scanner cryptogram = new Scanner(new File(filePath));
+        String zString = cryptogram.next();
+        String cString = cryptogram.next();
+        String tString = cryptogram.next();
+        byte[] z = new byte[zString.length() / 2];
+        byte[] c = new byte[cString.length() / 2];
+        byte[] t = new byte[tString.length() / 2];
+
+        for (int i = 0; i < zString.length() / 2; i++) {
+            String byteString = "" + zString.charAt(i * 2) + zString.charAt(i * 2 + 1);
+            z[i] = stringToByte(byteString);
+        }
+
+        for (int i = 0; i < cString.length() / 2; i++) {
+            String byteString = "" + cString.charAt(i * 2) + cString.charAt(i * 2 + 1);
+            c[i] = stringToByte(byteString);
+        }
+
+        for (int i = 0; i < tString.length() / 2; i++) {
+            String byteString = "" + tString.charAt(i * 2) + tString.charAt(i * 2 + 1);
+            t[i] = stringToByte(byteString);
+        }
+
+        byte[] ke_ka = new byte[128];
+
+        KMACXOF256 kmac = new KMACXOF256();
+        kmac.kmacxof256(concat(z, key.getBytes()), new byte[]{}, 0, ke_ka, ke_ka.length, "S".getBytes());
+        byte[] m = new byte[c.length];
+        byte[] ke = Arrays.copyOfRange(ke_ka, 0, 64);
+        byte[] ka = Arrays.copyOfRange(ke_ka, 64, 128);
+        kmac.kmacxof256(ke, new byte[]{}, 0, m, m.length, "SKE".getBytes());
+        for (int i = 0; i < m.length; i++) {
+            m[i] ^= c[i];
+        }
+
+        byte[] tPrime = new byte[64];
+        kmac.kmacxof256(ka, m, m.length, tPrime, tPrime.length, "SKA".getBytes());
+        if (Arrays.equals(t, tPrime)) {
+            FileWriter output = new FileWriter(new File("./plaintext.txt"), false);
+            for (int i = 0; i < m.length; i++) {
+                output.append((char) m[i]);
+            }
+            output.close();
+            System.out.println("Decrypted file stored at ./plaintext.txt");
+        } else {
+            System.out.println("The passphrase is incorrect.");
+        }
+    }
+
+    public static void computeHashOfInput(Scanner userInput) {
+        throw new UnsupportedOperationException("Computing hash of input not yet supported");
+    }
+
+    public static void computeMAC(Scanner userInput) {
+        throw new UnsupportedOperationException("Computing MAC not yet supported");
+    }
+
+
     // main
-    public static void main(String[] args)
-    {
-        if (test_sha3() == 0 && test_shake() == 0)
-            System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
+    public static void main(String[] args) throws IOException {
+        HEX_MAP = new HashMap<Integer, Character>();
+        HEX_MAP.put(0, '0');
+        HEX_MAP.put(1, '1');
+        HEX_MAP.put(2, '2');
+        HEX_MAP.put(3, '3');
+        HEX_MAP.put(4, '4');
+        HEX_MAP.put(5, '5');
+        HEX_MAP.put(6, '6');
+        HEX_MAP.put(7, '7');
+        HEX_MAP.put(8, '8');
+        HEX_MAP.put(9, '9');
+        HEX_MAP.put(10, 'A');
+        HEX_MAP.put(11, 'B');
+        HEX_MAP.put(12, 'C');
+        HEX_MAP.put(13, 'D');
+        HEX_MAP.put(14, 'E');
+        HEX_MAP.put(15, 'F');
+//        if (test_sha3() == 0 && test_shake() == 0)
+//            System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
         //test_speed();
+        Scanner userInput = new Scanner(System.in);
+        System.out.println("1) Computer a plain cryptographic hash of a file");
+        System.out.println("2) Encrypt a plaintext file under a passphrase");
+        System.out.println("3) Decrypt a symmetric cryptogram with a given passphrase");
+        System.out.println("4) Compute a plain cryptographic hash of a given input");
+        System.out.println("5) Compute an authentication tag (MAC) of a given file under a given passphrase");
+        System.out.print("Select an option: ");
+        String in = userInput.next();
+        while (!in.matches("[1-5]")) {
+            System.out.println("Please select a valid option (enter a number 1-5)");
+            in = userInput.next();
+        }
+        int selection = Integer.parseInt(in);
+        switch (selection) {
+            case 1:
+                computeHashOfFile(userInput);
+                break;
+            case 2:
+                encryptFile(userInput);
+                break;
+            case 3:
+                decryptFile(userInput);
+                break;
+            case 4:
+                computeHashOfInput(userInput);
+                break;
+            case 5:
+                computeMAC(userInput);
+                break;
+        }
+    }
+
+    private static byte stringToByte(String byteString) {
+        byte b = 0;
+        Set<Map.Entry<Integer, Character>> entries = HEX_MAP.entrySet();
+        Iterator<Map.Entry<Integer, Character>> itr = entries.iterator();
+        Map.Entry<Integer, Character> curr = itr.next();
+        while (curr.getValue() != byteString.charAt(0)) curr = itr.next();
+        b += curr.getKey() << 4;
+        itr = entries.iterator();
+        curr = itr.next();
+        while (curr.getValue() != byteString.charAt(1)) curr = itr.next();
+        b += curr.getKey();
+        return b;
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int val1 = (bytes[j] & 0xF0) >>> 4;
+            hexChars[j * 2] = HEX_MAP.get(val1);
+            int val2 = bytes[j] & 0x0F;
+            hexChars[j * 2 + 1] = HEX_MAP.get(val2);
+        }
+        return new String(hexChars);
+    }
+
+    private static byte[] concat(byte[] a, byte[] b) {
+        byte[] ret = new byte[a.length + b.length];
+        int i;
+        for (i = 0; i < a.length; i++) {
+            ret[i] = a[i];
+        }
+
+        for (int j = 0; j < b.length; j++) {
+            ret[j + i] = b[j];
+        }
+        return ret;
     }
 
 }
