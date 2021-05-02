@@ -5,7 +5,7 @@ public class SHA3 {
     // state context
     byte[] b = new byte[200];
     int pt, rsiz, mdlen;
-    boolean ext = true;
+    boolean ext = false;
 
     public static long ROTL64(long x, long y) {
         return (((x) << (y)) | ((x) >>> (64 - (y))));
@@ -256,15 +256,8 @@ public class SHA3 {
     }
 
     public static byte[] encode_string(byte[] S) {
-        long slen = S.length;
-        long x = 0;
-        for (int i = S.length - 1; i >= 0; i--) {
-            x += S[i] << (8 * i);
-        }
 
-        int i = 0;
-        x += slen << (8 * S.length);
-        return left_encode(x);
+        return concat(left_encode(S.length * 8), S);
     }
 
     public static byte[] bytepad(byte[] X, int w) {
@@ -278,6 +271,18 @@ public class SHA3 {
         }
 
         return z;
+    }
+    private static byte[] concat(byte[] a, byte[] b) {
+        byte[] ret = new byte[a.length + b.length];
+        int i;
+        for (i = 0; i < a.length; i++) {
+            ret[i] = a[i];
+        }
+
+        for (int j = 0; j < b.length; j++) {
+            ret[j + i] = b[j];
+        }
+        return ret;
     }
 
 //    private static byte enc8(byte b) {

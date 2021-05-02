@@ -12,8 +12,8 @@ public class SHAKE extends SHA3 {
         sha3_update(data, len);
     }
     void shake_xof() {
-        b[pt] ^= (byte) (/*this.ext ? 0x04 : */0x1F);
-        b[rsiz - 1] ^= 0x80;
+        b[pt] ^= (byte) (this.ext ? 0x04 : 0x1F);
+        b[rsiz - 1] ^=  0x80;
         sha3_keccakf(b);
         pt = 0;
     }
