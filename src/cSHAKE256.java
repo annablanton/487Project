@@ -23,6 +23,8 @@ public class cSHAKE256 extends SHAKE {
         }
         shake256_init();
         sha3_keccakf(newX);
+        shake_xof();
+        shake_out(md, mdlen);
         return newX;
     }
 
