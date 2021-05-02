@@ -1,4 +1,5 @@
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class Driver {
     static int test_hexdigit(char ch)
@@ -177,12 +178,63 @@ public class Driver {
 //
 //    }
 
+    public static void computeHashOfFile(Scanner userInput) {
+        throw new UnsupportedOperationException("Computing hash of file not yet supported");
+    }
+
+    public static void encryptFile(Scanner userInput) {
+        throw new UnsupportedOperationException("Encryption not yet supported");
+    }
+
+    public static void decryptFile(Scanner userInput) {
+        throw new UnsupportedOperationException("Decryption not yet supported");
+    }
+
+    public static void computeHashOfInput(Scanner userInput) {
+        throw new UnsupportedOperationException("Computing hash of input not yet supported");
+    }
+
+    public static void computeMAC(Scanner userInput) {
+        throw new UnsupportedOperationException("Computing MAC not yet supported");
+    }
+
+
     // main
     public static void main(String[] args)
     {
-        if (test_sha3() == 0 && test_shake() == 0)
-            System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
+//        if (test_sha3() == 0 && test_shake() == 0)
+//            System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
         //test_speed();
+        Scanner userInput = new Scanner(System.in);
+        System.out.println("Select an option:");
+        System.out.println("1) Computer a plain cryptographic hash of a file");
+        System.out.println("2) Encrypt a plaintext file under a passphrase");
+        System.out.println("3) Decrypt a symmetric cryptogram with a given passphrase");
+        System.out.println("4) Compute a plain cryptographic hash of a given input");
+        System.out.println("5) Compute an authentication tag (MAC) of a given file under a given passphrase");
+        String in = userInput.next();
+        while (!in.matches("[1-5]")) {
+            System.out.println("Please select a valid option (enter a number 1-5)");
+            in = userInput.next();
+        }
+        int selection = Integer.parseInt(in);
+        switch (selection) {
+            case 1:
+                computeHashOfFile(userInput);
+                break;
+            case 2:
+                encryptFile(userInput);
+                break;
+            case 3:
+                decryptFile(userInput);
+                break;
+            case 4:
+                computeHashOfInput(userInput);
+                break;
+            case 5:
+                computeMAC(userInput);
+                break;
+        }
     }
 
 }
