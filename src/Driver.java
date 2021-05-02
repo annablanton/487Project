@@ -92,6 +92,61 @@ public class Driver {
         return fails;
     }
 
+    static int test_shake()
+    {
+        // Test vectors have bytes 480..511 of XOF output for given inputs.
+        // From http://csrc.nist.gov/groups/ST/toolkit/examples.html#aHashing
+
+        final String[] testhex = {
+                // SHAKE128, message of length 0
+                "43E41B45A653F2A5C4492C1ADD544512DDA2529833462B71A41A45BE97290B6F",
+                // SHAKE256, message of length 0
+                "AB0BAE316339894304E35877B0C28A9B1FD166C796B9CC258A064A8F57E27F2A",
+                // SHAKE128, 1600-bit test pattern
+                "44C9FB359FD56AC0A9A75A743CFF6862F17D7259AB075216C0699511643B6439",
+                // SHAKE256, 1600-bit test pattern
+                "6A1A9D7846436E4DCA5728B6F760EEF0CA92BF0BE5615E96959D767197A0BEEB"
+        };
+
+        SHAKE test_shake = new SHAKE();
+
+        int i, j, fails;
+        byte[/*32*/] buf = new byte[32], ref = new byte[32];
+
+        fails = 0;
+
+        for (i = 0; i < 4; i++) {
+
+            if ((i & 1) == 0) {             // test each twice
+                test_shake.shake128_init();
+            } else {
+                test_shake.shake256_init();
+            }
+
+            if (i >= 2) {                   // 1600-bit test pattern
+                Arrays.fill(buf, 0, 20, (byte) 0xA3);
+                for (j = 0; j < 200; j += 20)
+                    test_shake.shake_update(buf, 20);
+            }
+
+            test_shake.shake_xof();               // switch to extensible output
+
+            for (j = 0; j < 512; j += 32)   // output. discard bytes 0..479
+                test_shake.shake_out(buf, 32);
+
+            // compare to reference
+            test_readhex(ref, testhex[i], ref.length);
+            if (!Arrays.equals(buf, ref)) {
+                System.out.println("[" + i + "] SHAKE" + ((i & 1) == 1 ? 256 : 128) + ", len "+ (i >= 2 ? 1600 : 0) + " test FAILED.\n");
+                System.out.println(Arrays.toString(buf));
+                System.out.println(Arrays.toString(ref));
+                fails++;
+            }
+        }
+
+        return fails;
+    }
+
 // test speed of the comp
 
 //    static void test_speed()
@@ -125,7 +180,7 @@ public class Driver {
     // main
     public static void main(String[] args)
     {
-        if (test_sha3() == 0)
+        if (test_sha3() == 0 && test_shake() == 0)
             System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
         //test_speed();
     }
