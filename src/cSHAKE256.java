@@ -25,7 +25,7 @@ public class cSHAKE256 extends SHAKE {
         sha3_keccakf(newX);
         shake_xof();
         shake_out(md, mdlen);
-        return newX;
+        return md;
     }
 
     private byte[] concat(byte[] a, byte[] b) {
