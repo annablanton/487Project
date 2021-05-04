@@ -330,8 +330,37 @@ public class Driver {
         System.out.println(bytesToHex(md));
     }
 
-    public static void computeMAC(Scanner userInput) {
-        throw new UnsupportedOperationException("Computing MAC not yet supported");
+    public static void computeMAC(Scanner userInput) throws FileNotFoundException{
+        System.out.print("Please enter the filepath: ");
+        String filePath = userInput.next();
+        System.out.print("Please enter the passphrase: ");
+        String pw = userInput.next();
+        byte[] md = new byte[64];
+        KMACXOF256 kmac = new KMACXOF256();
+        Scanner file = new Scanner(new File(filePath));
+        int fileLength = 0;
+        while (file.hasNextLine()) {
+            fileLength += file.nextLine().length();
+            if (file.hasNext()) fileLength++;
+        }
+
+        byte[] fileArray = new byte[fileLength];
+        int i = 0;
+        file = new Scanner(new File(filePath));
+        while (file.hasNextLine()) {
+            String line = file.nextLine();
+            for (int j = 0; j < line.length(); j++) {
+                fileArray[i] = (byte) line.charAt(j);
+                i++;
+            }
+            if (file.hasNext()) {
+                fileArray[i] = (byte) '\n';
+                i++;
+            }
+        }
+        kmac.kmacxof256(pw.getBytes(), fileArray, fileArray.length, md, md.length, "T".getBytes());
+        System.out.println(bytesToHex(md));
+
     }
 
 
@@ -359,9 +388,9 @@ public class Driver {
         //test_speed();
         Scanner userInput = new Scanner(System.in);
         System.out.println("1) Computer a plain cryptographic hash of a file");
-        System.out.println("2) Encrypt a plaintext file under a passphrase");
-        System.out.println("3) Decrypt a symmetric cryptogram with a given passphrase");
-        System.out.println("4) Compute a plain cryptographic hash of a given input");
+        System.out.println("2) Compute a plain cryptographic hash of a given input");
+        System.out.println("3) Encrypt a plaintext file under a passphrase");
+        System.out.println("4) Decrypt a symmetric cryptogram with a given passphrase");
         System.out.println("5) Compute an authentication tag (MAC) of a given file under a given passphrase");
         System.out.print("Select an option: ");
         String in = userInput.next();
@@ -375,13 +404,13 @@ public class Driver {
                 computeHashOfFile(userInput);
                 break;
             case 2:
-                encryptFile(userInput);
+                computeHashOfInput(userInput);
                 break;
             case 3:
                 decryptFile(userInput);
                 break;
             case 4:
-                computeHashOfInput(userInput);
+                encryptFile(userInput);
                 break;
             case 5:
                 computeMAC(userInput);
