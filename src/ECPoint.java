@@ -20,8 +20,13 @@ public class ECPoint {
         this.y = sqrt(BigInteger.ONE.subtract(x.multiply(x)).multiply(BigInteger.ONE.add(d.multiply(x).multiply(x))), p, lsb);
     }
 
-    public boolean equals(ECPoint other) {
-        return this.x.equals(other.x) && this.y.equals(other.y);
+    @Override
+    public boolean equals(Object other) {
+        if (this.getClass().equals(other.getClass())) {
+            ECPoint o = (ECPoint) other;
+            return this.x.equals(o.x) && this.y.equals(o.y);
+        }
+        return false;
     }
 
     public ECPoint negate() {
@@ -40,14 +45,21 @@ public class ECPoint {
     }
 
     public ECPoint multiply(BigInteger s) {
-        ECPoint V = this;
-        for (int i = 0; i < s.bitCount(); i++) {
-            V = V.add(V);
-            if (s.testBit(i)) {
-                V = V.add(this);
+        if (s.bitLength() > 0) {
+            ECPoint V = this;
+            for (int i = s.bitLength() - 2; i >= 0; i--) {
+                V = V.add(V);
+                if (s.testBit(i)) {
+                    V = V.add(this);
+                }
             }
+            return V;
         }
-        return V;
+        return new ECPoint();
+    }
+
+    public String toString() {
+        return x + ", " + y;
     }
 
     private BigInteger sqrt(BigInteger v, BigInteger p, boolean lsb) {
