@@ -184,7 +184,7 @@ public class Driver {
 //
 //    }
 
-    public static void computeHashOfFile(Scanner userInput) throws FileNotFoundException {
+    private static void computeHashOfFile(Scanner userInput) throws FileNotFoundException {
         System.out.print("Please enter the filepath: ");
         String filePath = userInput.next();
         byte[] md = new byte[64];
@@ -214,7 +214,7 @@ public class Driver {
         System.out.println(bytesToHex(md));
     }
 
-    public static void encryptFile(Scanner userInput) throws IOException {
+    private static void encryptFile(Scanner userInput) throws IOException {
         System.out.print("Please enter the filepath for the file to be encrypted: ");
         String filePath = userInput.next();
         System.out.print("Please enter the passphrase: ");
@@ -266,7 +266,7 @@ public class Driver {
 
     }
 
-    public static void decryptFile(Scanner userInput) throws IOException {
+    private static void decryptFile(Scanner userInput) throws IOException {
         System.out.print("Please enter the filepath of the cryptogram to be decrypted: ");
         String filePath = userInput.next();
         System.out.print("Please enter the passphrase: ");
@@ -320,7 +320,7 @@ public class Driver {
         }
     }
 
-    public static void computeHashOfInput(Scanner userInput) {
+    private static void computeHashOfInput(Scanner userInput) {
         System.out.print("Please enter the text to be decrypted: ");
         String userInputText = userInput.next();
 
@@ -330,7 +330,7 @@ public class Driver {
         System.out.println(bytesToHex(md));
     }
 
-    public static void computeMAC(Scanner userInput) throws FileNotFoundException{
+    private static void computeMAC(Scanner userInput) throws FileNotFoundException{
         System.out.print("Please enter the filepath: ");
         String filePath = userInput.next();
         System.out.print("Please enter the passphrase: ");
@@ -363,7 +363,7 @@ public class Driver {
 
     }
 
-    public static void kmacFunctions(Scanner userInput) throws IOException {
+    private static void kmacFunctions(Scanner userInput) throws IOException {
         System.out.println("1) Compute a plain cryptographic hash of a file");
         System.out.println("2) Compute a plain cryptographic hash of a given input");
         System.out.println("3) Encrypt a plaintext file under a passphrase");
@@ -395,8 +395,72 @@ public class Driver {
         }
     }
 
-    public static void eccFunctions(Scanner userInput) {
-        throw new UnsupportedOperationException("ECC functionality not yet implemented");
+    private static void generateEllipticKeyPair(Scanner userInput) {
+        throw new UnsupportedOperationException("Generating elliptic key pair from passphrase not yet supported");
+    }
+
+    private static void encryptFileEllipticKey(Scanner userInput) {
+        throw new UnsupportedOperationException("Encrypting data file under elliptic public key not yet supported");
+    }
+
+    private static void decryptEllipticFile(Scanner userInput) {
+        throw new UnsupportedOperationException("Decrypting elliptic-encrypted file not yet supported");
+    }
+
+    private static void encryptTextEllipticKey(Scanner userInput) {
+        throw new UnsupportedOperationException("Encrypting text under elliptic public key not yet supported");
+    }
+
+    private static void decryptEllipticText(Scanner userInput) {
+        throw new UnsupportedOperationException("Decrypting elliptic-encrypted text not yet supported");
+    }
+
+    private static void signFile(Scanner userInput) {
+        throw new UnsupportedOperationException("Digital signatures not yet supported");
+    }
+
+    private static void verifySignature(Scanner userInput) {
+        throw new UnsupportedOperationException("Verifying signatures not yet supported");
+    }
+
+    private static void eccFunctions(Scanner userInput) {
+        System.out.println("1) Generate elliptic key pair from passphrase");
+        System.out.println("2) Encrypt data file under elliptic public key file");
+        System.out.println("3) Decrypt elliptic-encrypted file from passphrase");
+        System.out.println("4) Encrypt given text under elliptic public key file");
+        System.out.println("5) Decrypt given elliptic-encrypted text from passphrase");
+        System.out.println("6) Sign file from passphrase and write signature to file");
+        System.out.println("7) Verify given data file and its signature file under a public key file");
+        System.out.print("Select an option: ");
+        String in = userInput.next();
+        while (!in.matches("[1-7]")) {
+            System.out.println("Please select a valid option (enter a number 1-7)");
+            in = userInput.next();
+        }
+        int selection = Integer.parseInt(in);
+        switch (selection) {
+            case 1:
+                generateEllipticKeyPair(userInput);
+                break;
+            case 2:
+                encryptFileEllipticKey(userInput);
+                break;
+            case 3:
+                decryptEllipticFile(userInput);
+                break;
+            case 4:
+                encryptTextEllipticKey(userInput);
+                break;
+            case 5:
+                decryptEllipticText(userInput);
+                break;
+            case 6:
+                signFile(userInput);
+                break;
+            case 7:
+                verifySignature(userInput);
+                break;
+        }
     }
 
 
