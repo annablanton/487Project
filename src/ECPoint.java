@@ -16,8 +16,8 @@ public class ECPoint {
     }
 
     public ECPoint(BigInteger x, boolean lsb) {
-        //TODO write ECPoint constructor that takes x coord and lsb of y coord
-        throw new UnsupportedOperationException("LSB constructor not yet implemented");
+        this.x = x;
+        this.y = sqrt(BigInteger.ONE.subtract(x.multiply(x)).multiply(BigInteger.ONE.add(d.multiply(x).multiply(x))), p, lsb);
     }
 
     public boolean equals(ECPoint other) {
@@ -29,7 +29,6 @@ public class ECPoint {
     }
 
     public ECPoint add(ECPoint other) {
-        //TODO write elliptic curve addition method
         BigInteger x1y2 = this.x.multiply(other.y);
         BigInteger y1x2 = this.y.multiply(other.x);
         BigInteger x1x2 = this.x.multiply(other.x);
@@ -40,8 +39,26 @@ public class ECPoint {
         return new ECPoint(newX, newY);
     }
 
-    public ECPoint multiply(BigInteger k) {
-        //TODO write elliptic curve multiplication method
-        throw new UnsupportedOperationException("Multiply not yet implemented");
+    public ECPoint multiply(BigInteger s) {
+        ECPoint V = this;
+        for (int i = 0; i < s.bitCount(); i++) {
+            V = V.add(V);
+            if (s.testBit(i)) {
+                V = V.add(this);
+            }
+        }
+        return V;
+    }
+
+    private BigInteger sqrt(BigInteger v, BigInteger p, boolean lsb) {
+        assert(p.testBit(0) && p.testBit(1));
+        if (v.signum() == 0) {
+            return BigInteger.ZERO;
+        }
+        BigInteger r = v.modPow(p.shiftRight(2).add(BigInteger.ONE), p);
+        if (r.testBit(0) != lsb) {
+            r = p.subtract(r);
+        }
+        return (r.multiply(r).subtract(v).mod(p).signum() == 0) ? r : null;
     }
 }
