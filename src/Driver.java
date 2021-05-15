@@ -363,31 +363,8 @@ public class Driver {
 
     }
 
-
-    // main
-    public static void main(String[] args) throws IOException {
-        HEX_MAP = new HashMap<Integer, Character>();
-        HEX_MAP.put(0, '0');
-        HEX_MAP.put(1, '1');
-        HEX_MAP.put(2, '2');
-        HEX_MAP.put(3, '3');
-        HEX_MAP.put(4, '4');
-        HEX_MAP.put(5, '5');
-        HEX_MAP.put(6, '6');
-        HEX_MAP.put(7, '7');
-        HEX_MAP.put(8, '8');
-        HEX_MAP.put(9, '9');
-        HEX_MAP.put(10, 'A');
-        HEX_MAP.put(11, 'B');
-        HEX_MAP.put(12, 'C');
-        HEX_MAP.put(13, 'D');
-        HEX_MAP.put(14, 'E');
-        HEX_MAP.put(15, 'F');
-//        if (test_sha3() == 0 && test_shake() == 0)
-//            System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
-        //test_speed();
-        Scanner userInput = new Scanner(System.in);
-        System.out.println("1) Computer a plain cryptographic hash of a file");
+    public static void kmacFunctions(Scanner userInput) throws IOException {
+        System.out.println("1) Compute a plain cryptographic hash of a file");
         System.out.println("2) Compute a plain cryptographic hash of a given input");
         System.out.println("3) Encrypt a plaintext file under a passphrase");
         System.out.println("4) Decrypt a symmetric cryptogram with a given passphrase");
@@ -414,6 +391,53 @@ public class Driver {
                 break;
             case 5:
                 computeMAC(userInput);
+                break;
+        }
+    }
+
+    public static void eccFunctions(Scanner userInput) {
+        throw new UnsupportedOperationException("ECC functionality not yet implemented");
+    }
+
+
+    // main
+    public static void main(String[] args) throws IOException {
+        HEX_MAP = new HashMap<Integer, Character>();
+        HEX_MAP.put(0, '0');
+        HEX_MAP.put(1, '1');
+        HEX_MAP.put(2, '2');
+        HEX_MAP.put(3, '3');
+        HEX_MAP.put(4, '4');
+        HEX_MAP.put(5, '5');
+        HEX_MAP.put(6, '6');
+        HEX_MAP.put(7, '7');
+        HEX_MAP.put(8, '8');
+        HEX_MAP.put(9, '9');
+        HEX_MAP.put(10, 'A');
+        HEX_MAP.put(11, 'B');
+        HEX_MAP.put(12, 'C');
+        HEX_MAP.put(13, 'D');
+        HEX_MAP.put(14, 'E');
+        HEX_MAP.put(15, 'F');
+//        if (test_sha3() == 0 && test_shake() == 0)
+//            System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
+        //test_speed();
+        Scanner userInput = new Scanner(System.in);
+        System.out.println("1) KMACXOF256 functionality");
+        System.out.println("2) ECHDIES encryption/Schnorr signature functionality");
+        System.out.println("Select an option: ");
+        String in = userInput.next();
+        while (!in.matches("[12]")) {
+            System.out.println("Please select a valid option (enter 1 or 2)");
+            in = userInput.next();
+        }
+        int selection = Integer.parseInt(in);
+        switch (selection) {
+            case 1:
+                kmacFunctions(userInput);
+                break;
+            case 2:
+                eccFunctions(userInput);
                 break;
         }
     }
