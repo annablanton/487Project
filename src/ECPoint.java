@@ -4,6 +4,7 @@ public class ECPoint {
     public BigInteger x;
     public BigInteger y;
     public static final BigInteger p = BigInteger.TWO.pow(521).subtract(BigInteger.ONE);
+    public static final BigInteger d = BigInteger.valueOf(-376014);
     public ECPoint() {
         x = BigInteger.ZERO;
         y = BigInteger.ONE;
@@ -29,7 +30,14 @@ public class ECPoint {
 
     public ECPoint add(ECPoint other) {
         //TODO write elliptic curve addition method
-        throw new UnsupportedOperationException("Add not yet implemented");
+        BigInteger x1y2 = this.x.multiply(other.y);
+        BigInteger y1x2 = this.y.multiply(other.x);
+        BigInteger x1x2 = this.x.multiply(other.x);
+        BigInteger y1y2 = this.y.multiply(other.y);
+
+        BigInteger newX = x1y2.add(y1x2).multiply(BigInteger.ONE.add(d.multiply(x1x2).multiply(y1y2)).modInverse(p));
+        BigInteger newY = y1y2.subtract(x1x2).multiply(BigInteger.ONE.subtract(d.multiply(x1x2).multiply(y1y2)).modInverse(p));
+        return new ECPoint(newX, newY);
     }
 
     public ECPoint multiply(BigInteger k) {
