@@ -417,7 +417,7 @@ public class Driver {
         output.append(bytesToHex(pkArr).substring(1));
         output.close();
         System.out.println("522-bit public key written to ./elliptickey.txt");
-        System.out.println("LSB is equal to LSB of y-coordinate; remaining 521 bits are equal to the x-coordinate");
+        System.out.println("LSB is equal to LSB of y-coordinate; remaining 521 bits are equal to the x-coordinate left-shifted by one bit");
 
         System.out.println("Private key is " + bytesToHex(s.toByteArray()));
         System.out.println("Do not lose or share this private key!");
