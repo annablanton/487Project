@@ -220,10 +220,8 @@ public class Driver {
         String filePath = userInput.next();
         System.out.print("Please enter the passphrase: ");
         String key = userInput.next();
-        int z = rand.nextInt(512);
-        byte[] zArray = new byte[2];
-        zArray[0] = (byte) ((z & 0xFF00) >>> 8);
-        zArray[1] = (byte) (z & 0x00FF);
+        byte[] zArray = new byte[64];
+        rand.nextBytes(zArray);
         byte[] ke_ka = new byte[128];
         KMACXOF256 kmac = new KMACXOF256();
         Scanner file = new Scanner(new File(filePath));
@@ -385,10 +383,10 @@ public class Driver {
                 computeHashOfInput(userInput);
                 break;
             case 3:
-                decryptFile(userInput);
+                encryptFile(userInput);
                 break;
             case 4:
-                encryptFile(userInput);
+                decryptFile(userInput);
                 break;
             case 5:
                 computeMAC(userInput);
