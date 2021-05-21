@@ -6,6 +6,7 @@ public class ECPoint {
     public static final BigInteger p = BigInteger.TWO.pow(521).subtract(BigInteger.ONE);
     public static final BigInteger d = BigInteger.valueOf(-376014);
     public static final BigInteger r = BigInteger.TWO.pow(519).subtract(new BigInteger("337554763258501705789107630418782636071904961214051226618635150085779108655765"));
+    public static final ECPoint g = new ECPoint(BigInteger.valueOf(4), false);
     public ECPoint() {
         x = BigInteger.ZERO;
         y = BigInteger.ONE;

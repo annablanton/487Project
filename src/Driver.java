@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -219,10 +220,8 @@ public class Driver {
         String filePath = userInput.next();
         System.out.print("Please enter the passphrase: ");
         String key = userInput.next();
-        int z = rand.nextInt(512);
-        byte[] zArray = new byte[2];
-        zArray[0] = (byte) ((z & 0xFF00) >>> 8);
-        zArray[1] = (byte) (z & 0x00FF);
+        byte[] zArray = new byte[64];
+        rand.nextBytes(zArray);
         byte[] ke_ka = new byte[128];
         KMACXOF256 kmac = new KMACXOF256();
         Scanner file = new Scanner(new File(filePath));
@@ -384,10 +383,10 @@ public class Driver {
                 computeHashOfInput(userInput);
                 break;
             case 3:
-                decryptFile(userInput);
+                encryptFile(userInput);
                 break;
             case 4:
-                encryptFile(userInput);
+                decryptFile(userInput);
                 break;
             case 5:
                 computeMAC(userInput);
@@ -395,8 +394,31 @@ public class Driver {
         }
     }
 
-    private static void generateEllipticKeyPair(Scanner userInput) {
-        throw new UnsupportedOperationException("Generating elliptic key pair from passphrase not yet supported");
+    private static void generateEllipticKeyPair(Scanner userInput) throws IOException {
+        byte[] sArr= new byte[64];
+        System.out.print("Please enter the passphrase: ");
+        String key = userInput.next();
+        KMACXOF256 kmac = new KMACXOF256();
+        kmac.kmacxof256(key.getBytes(), new byte[0], 0, sArr, sArr.length, "K".getBytes());
+        BigInteger s = new BigInteger(sArr);
+        s = s.multiply(BigInteger.valueOf(4));
+        ECPoint v = ECPoint.g.multiply(s);
+        FileWriter output = new FileWriter(new File("./elliptickey.txt"), false);
+        BigInteger publicKey = v.x;
+        publicKey.shiftLeft(1);
+        if (v.y.testBit(0)) publicKey.add(BigInteger.ONE);
+        byte[] pkTempArr = publicKey.toByteArray();
+        byte[] pkArr = new byte[66];
+        for (int i = 0; i < pkTempArr.length; i++) {
+            pkArr[pkArr.length - 1 - i] = pkTempArr[pkTempArr.length - 1 - i];
+        }
+        output.append(bytesToHex(pkArr).substring(1));
+        output.close();
+        System.out.println("522-bit public key written to ./elliptickey.txt");
+        System.out.println("LSB is equal to LSB of y-coordinate; remaining 521 bits are equal to the x-coordinate left-shifted by one bit");
+
+        System.out.println("Private key is " + bytesToHex(s.toByteArray()));
+        System.out.println("Do not lose or share this private key!");
     }
 
     private static void encryptFileEllipticKey(Scanner userInput) {
@@ -423,7 +445,7 @@ public class Driver {
         throw new UnsupportedOperationException("Verifying signatures not yet supported");
     }
 
-    private static void eccFunctions(Scanner userInput) {
+    private static void eccFunctions(Scanner userInput) throws IOException {
         System.out.println("1) Generate elliptic key pair from passphrase");
         System.out.println("2) Encrypt data file under elliptic public key file");
         System.out.println("3) Decrypt elliptic-encrypted file from passphrase");
