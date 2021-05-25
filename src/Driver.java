@@ -1,8 +1,7 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.SecureRandom;
 import java.util.*;
 
@@ -421,24 +420,263 @@ public class Driver {
         System.out.println("Do not lose or share this private key!");
     }
 
-    private static void encryptFileEllipticKey(Scanner userInput) {
-        throw new UnsupportedOperationException("Encrypting data file under elliptic public key not yet supported");
+    private static void encryptFileEllipticKey(Scanner userInput) throws IOException {
+        System.out.print("Please enter the filepath for the file to be encrypted: ");
+        String filePath = userInput.next();
+        System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
+        String keyPath = userInput.next();
+        String key = "";
+        BufferedReader br = new BufferedReader(new FileReader(keyPath));
+        StringBuilder sb = new StringBuilder();
+        String line = br.readLine();
+        while (line != null) {
+            sb.append(line);
+            line = br.readLine();
+        }
+        key = sb.toString();
+
+        // k<-random(512);
+        byte[] kArray = new byte[64];
+        rand.nextBytes(kArray);
+        BigInteger k = new BigInteger(kArray);
+
+        //k<-4k
+        k = k.multiply(BigInteger.valueOf(4));
+
+        //Generate v
+        int len = key.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(key.charAt(i), 16) << 4)
+                    + Character.digit(key.charAt(i+1), 16));
+        }
+        byte[] temp = data;
+        BigInteger x = new BigInteger(temp);
+        boolean y = x.testBit(0);
+        x = x.shiftRight(1);
+        ECPoint v = new ECPoint(x, y);
+
+        // w<-v*k
+        ECPoint w = v.multiply(k);
+
+        //z<-k*G
+        ECPoint z = ECPoint.g.multiply(k);
+
+        // (ke||ka) <- KMACXOF256(W_x,"",1024,"P");
+        KMACXOF256 kmac = new KMACXOF256();
+        byte[] ke_ka = new byte[128];
+
+        kmac.kmacxof256(w.x.toByteArray(), new byte[]{}, 0, ke_ka, ke_ka.length, "P".getBytes());
+        byte[] ke = Arrays.copyOfRange(ke_ka, 0, 64);
+        byte[] ka = Arrays.copyOfRange(ke_ka, 64, 128);
+
+
+        //(c<-KMACXOF256 &&t<-KMACXOF256)
+        // |m| & m
+        int i = 0;
+        Scanner file = new Scanner(new File(filePath));
+        int fileLength = 0;
+        while (file.hasNextLine()) {
+            fileLength += file.nextLine().length();
+            if (file.hasNext()) fileLength++;
+        }
+
+        byte[] fileArray = new byte[fileLength];
+        file = new Scanner(new File(filePath));
+        while (file.hasNextLine()) {
+            String line1 = file.nextLine();
+            for (int j = 0; j < line1.length(); j++) {
+                fileArray[i] = (byte) line1.charAt(j);
+                i++;
+            }
+            if (file.hasNext()) {
+                fileArray[i] = (byte) '\n';
+                i++;
+            }
+        }
+
+        //c<-KMACXOF256
+        byte[] c = new byte[fileLength];
+        kmac.kmacxof256(ke, new byte[]{}, 0, c, c.length, "PKE".getBytes());
+        for (i = 0; i < c.length; i++) {
+            c[i] ^= fileArray[i];
+        }
+        //t<-KMACXOF256
+        byte[] t = new byte[64];
+        kmac.kmacxof256(ka, fileArray, fileArray.length, t, t.length, "PKA".getBytes());
+
+        //Z
+        BigInteger publicKey = z.x;
+        publicKey.shiftLeft(1);
+        if (z.y.testBit(0)) publicKey.add(BigInteger.ONE);
+        byte[] pkTempArr = publicKey.toByteArray();
+        byte[] pkArr = new byte[66];
+        for (i = 0; i < pkTempArr.length; i++) {
+            pkArr[pkArr.length - 1 - i] = pkTempArr[pkTempArr.length - 1 - i];
+        }
+
+        //cryptogram:(Z,c,t);
+        FileWriter output = new FileWriter(new File("./cryptogram.txt"), false);
+        output.append(bytesToHex(pkArr) + "\n");
+        output.append(bytesToHex(c)+"\n");
+        output.append(bytesToHex(t));
+        output.close();
     }
 
     private static void decryptEllipticFile(Scanner userInput) {
         throw new UnsupportedOperationException("Decrypting elliptic-encrypted file not yet supported");
     }
 
-    private static void encryptTextEllipticKey(Scanner userInput) {
-        throw new UnsupportedOperationException("Encrypting text under elliptic public key not yet supported");
+    private static void encryptTextEllipticKey(Scanner userInput) throws IOException {
+        System.out.print("Please enter the text to be encrypted: ");
+        String text = userInput.next();
+        System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
+        String keyPath = userInput.next();
+        String key = "";
+        BufferedReader br = new BufferedReader(new FileReader(keyPath));
+        StringBuilder sb = new StringBuilder();
+        String line = br.readLine();
+        while (line != null) {
+            sb.append(line);
+            line = br.readLine();
+        }
+        key = sb.toString();
+
+        // k<-random(512);
+        byte[] kArray = new byte[64];
+        rand.nextBytes(kArray);
+        BigInteger k = new BigInteger(kArray);
+
+        //k<-4k
+        k = k.multiply(BigInteger.valueOf(4));
+
+        //Generate v
+        int len = key.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(key.charAt(i), 16) << 4)
+                    + Character.digit(key.charAt(i+1), 16));
+        }
+        byte[] temp = data;
+        BigInteger x = new BigInteger(temp);
+        boolean y = x.testBit(0);
+        x = x.shiftRight(1);
+        ECPoint v = new ECPoint(x, y);
+
+        // w<-v*k
+        ECPoint w = v.multiply(k);
+
+        //z<-k*G
+        ECPoint z = ECPoint.g.multiply(k);
+
+        // (ke||ka) <- KMACXOF256(W_x,"",1024,"P");
+        KMACXOF256 kmac = new KMACXOF256();
+        byte[] ke_ka = new byte[128];
+        kmac.kmacxof256(w.x.toByteArray(), new byte[]{}, 0, ke_ka, ke_ka.length, "P".getBytes());
+        byte[] ke = Arrays.copyOfRange(ke_ka, 0, 64);
+        byte[] ka = Arrays.copyOfRange(ke_ka, 64, 128);
+
+
+        //(c<-KMACXOF256 &&t<-KMACXOF256)
+        // |m| & m
+        int i = 0;
+        int textlength = text.length();
+        byte[] textArray = new byte[textlength];
+        for (i =0; i<text.length()-1; i++){
+            textArray[i] = (byte) text.charAt(i);
+            i++;
+        }
+
+        //c<-KMACXOF256
+        byte[] c = new byte[textlength];
+        kmac.kmacxof256(ke, new byte[]{}, 0, c, c.length, "PKE".getBytes());
+        for (i = 0; i < c.length; i++) {
+            c[i] ^= textArray[i];
+        }
+        //t<-KMACXOF256
+        byte[] t = new byte[64];
+        kmac.kmacxof256(ka, textArray, textArray.length, t, t.length, "PKA".getBytes());
+
+        //Z
+        BigInteger publicKey = z.x;
+        publicKey.shiftLeft(1);
+        if (z.y.testBit(0)) publicKey.add(BigInteger.ONE);
+        byte[] pkTempArr = publicKey.toByteArray();
+        byte[] pkArr = new byte[66];
+        for (i = 0; i < pkTempArr.length; i++) {
+            pkArr[pkArr.length - 1 - i] = pkTempArr[pkTempArr.length - 1 - i];
+        }
+
+        //cryptogram:(Z,c,t);
+        FileWriter output = new FileWriter(new File("./cryptogram.txt"), false);
+        output.append(bytesToHex(pkArr) + "\n");
+        output.append(bytesToHex(c)+"\n");
+        output.append(bytesToHex(t));
+        output.close();
     }
 
     private static void decryptEllipticText(Scanner userInput) {
         throw new UnsupportedOperationException("Decrypting elliptic-encrypted text not yet supported");
     }
 
-    private static void signFile(Scanner userInput) {
-        throw new UnsupportedOperationException("Digital signatures not yet supported");
+    private static void signFile(Scanner userInput) throws IOException {
+        System.out.print("Please enter the filepath for the file to be encrypted: ");
+        String filePath = userInput.next();
+        System.out.print("Please enter the passphrase: ");
+        String key = userInput.next();
+
+        //s<-KMACXOF256(pw,"",512,"k")
+        KMACXOF256 kmac = new KMACXOF256();
+        byte[] sArr= new byte[64];
+        byte[] kArr= new byte[64];
+        kmac.kmacxof256(key.getBytes(), new byte[0], 0, sArr, sArr.length, "K".getBytes());
+        BigInteger s = new BigInteger(sArr);
+        //s<-4s
+        s = s.multiply(BigInteger.valueOf(4));
+
+        //k<-KMACXOF256(s,m,512,"N")
+        Scanner file = new Scanner(new File(filePath));
+        int fileLength = 0;
+        while (file.hasNextLine()) {
+            fileLength += file.nextLine().length();
+            if (file.hasNext()) fileLength++;
+        }
+
+        byte[] fileArray = new byte[fileLength];
+        int i = 0;
+        file = new Scanner(new File(filePath));
+        while (file.hasNextLine()) {
+            String line = file.nextLine();
+            for (int j = 0; j < line.length(); j++) {
+                fileArray[i] = (byte) line.charAt(j);
+                i++;
+            }
+            if (file.hasNext()) {
+                fileArray[i] = (byte) '\n';
+                i++;
+            }
+        }
+        kmac.kmacxof256(s.toByteArray(), fileArray, fileArray.length, kArr, kArr.length, "N".getBytes());
+        BigInteger k = new BigInteger(kArr);
+
+        //k<-4k
+        k = k.multiply(BigInteger.valueOf(4));
+        //U<-K*G;
+        ECPoint u = ECPoint.g.multiply(k);
+
+        //h<-KMAXCOF256(Ux,m,512,"T");
+        byte[] hArr=new byte[64];
+        kmac.kmacxof256(u.x.toByteArray(), fileArray, fileArray.length, hArr, hArr.length, "T".getBytes());
+        BigInteger h = new BigInteger(hArr);
+
+        //z<-(k-hs)mod r
+        BigInteger z = k.subtract(h.multiply(s)).mod(ECPoint.r);
+
+        //signature:(h,z);
+        FileWriter output = new FileWriter(new File("./signature.txt"), false);
+        output.append(bytesToHex(h.toByteArray())+"\n");
+        output.append(bytesToHex(z.toByteArray()));
+        output.close();
     }
 
     private static void verifySignature(Scanner userInput) {
