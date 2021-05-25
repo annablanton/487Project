@@ -404,14 +404,14 @@ public class Driver {
         ECPoint v = ECPoint.g.multiply(s);
         FileWriter output = new FileWriter(new File("./elliptickey.txt"), false);
         BigInteger publicKey = v.x;
-        publicKey.shiftLeft(1);
-        if (v.y.testBit(0)) publicKey.add(BigInteger.ONE);
+        publicKey = publicKey.shiftLeft(1);
+        if (v.y.testBit(0)) publicKey = publicKey.add(BigInteger.ONE);
         byte[] pkTempArr = publicKey.toByteArray();
         byte[] pkArr = new byte[66];
         for (int i = 0; i < pkTempArr.length; i++) {
             pkArr[pkArr.length - 1 - i] = pkTempArr[pkTempArr.length - 1 - i];
         }
-        output.append(bytesToHex(pkArr).substring(1));
+        output.append(bytesToHex(pkArr));
         output.close();
         System.out.println("522-bit public key written to ./elliptickey.txt");
         System.out.println("LSB is equal to LSB of y-coordinate; remaining 521 bits are equal to the x-coordinate left-shifted by one bit");
@@ -507,8 +507,8 @@ public class Driver {
 
         //Z
         BigInteger publicKey = z.x;
-        publicKey.shiftLeft(1);
-        if (z.y.testBit(0)) publicKey.add(BigInteger.ONE);
+        publicKey = publicKey.shiftLeft(1);
+        if (z.y.testBit(0)) publicKey = publicKey.add(BigInteger.ONE);
         byte[] pkTempArr = publicKey.toByteArray();
         byte[] pkArr = new byte[66];
         for (i = 0; i < pkTempArr.length; i++) {
@@ -523,8 +523,91 @@ public class Driver {
         output.close();
     }
 
-    private static void decryptEllipticFile(Scanner userInput) {
-        throw new UnsupportedOperationException("Decrypting elliptic-encrypted file not yet supported");
+    private static void decryptEllipticFile(Scanner userInput) throws IOException {
+        System.out.print("Please enter the filepath for the file to be decrypted: ");
+        String filePath = userInput.next();
+        System.out.print("Please enter the passphrase: ");
+        String key = userInput.next();
+
+        // Decode cryptogram from the text file
+        Scanner cryptogram = new Scanner(new File(filePath));
+        String zString = cryptogram.next();
+        String cString = cryptogram.next();
+        String tString = cryptogram.next();
+        byte[] z = new byte[zString.length() / 2];
+        byte[] c = new byte[cString.length() / 2];
+        byte[] t = new byte[tString.length() / 2];
+
+        for (int i = 0; i < zString.length() / 2; i++) {
+            String byteString = "" + zString.charAt(i * 2) + zString.charAt(i * 2 + 1);
+            z[i] = stringToByte(byteString);
+        }
+
+        for (int i = 0; i < cString.length() / 2; i++) {
+            String byteString = "" + cString.charAt(i * 2) + cString.charAt(i * 2 + 1);
+            c[i] = stringToByte(byteString);
+        }
+
+        for (int i = 0; i < tString.length() / 2; i++) {
+            String byteString = "" + tString.charAt(i * 2) + tString.charAt(i * 2 + 1);
+            t[i] = stringToByte(byteString);
+        }
+
+        // Generate point on elliptic curve using the key string
+//        int len = key.length();
+//        byte[] data = new byte[len / 2];
+//        for (int i = 0; i < len; i += 2) {
+//            data[i / 2] = (byte) ((Character.digit(key.charAt(i), 16) << 4)
+//                    + Character.digit(key.charAt(i+1), 16));
+//        }
+//        byte[] temp = data;
+        BigInteger x = new BigInteger(z);
+        boolean y = x.testBit(0);
+        x = x.shiftRight(1);
+        ECPoint Z = new ECPoint(x, y); // The ending point
+
+
+        // s <- KMACXOF256(pw, “”, 512, “K”)
+        byte[] sArr = new byte[64];
+        KMACXOF256 kmac = new KMACXOF256();
+        kmac.kmacxof256(key.getBytes(), new byte[0], 0, sArr, sArr.length, "K".getBytes());
+
+        // s <- 4s
+        BigInteger s = new BigInteger(sArr);
+        s = s.multiply(BigInteger.valueOf(4));
+
+        // W <- s*Z
+        ECPoint w = Z.multiply(s);;
+
+
+        // (ke||ka) <- KMACXOF256(W_x,"",1024,"P");
+        byte[] ke_ka = new byte[128];
+        kmac.kmacxof256(w.x.toByteArray(), new byte[]{}, 0, ke_ka, ke_ka.length, "P".getBytes());
+        byte[] ke = Arrays.copyOfRange(ke_ka, 0, 64);
+        byte[] ka = Arrays.copyOfRange(ke_ka, 64, 128);
+
+        // m <- KMACXOF256(ke, “”, |c|,“PKE”) ^ c
+        byte[] m = new byte[c.length];
+        kmac.kmacxof256(ke, new byte[]{}, 0, m, c.length, "PKE".getBytes());
+        for (int i = 0; i < m.length; i++) {
+            m[i] ^= c[i];
+        }
+
+        // t’ <- KMACXOF256(ka, m, 512, “PKA”)
+        byte[] tPrime = new byte[64];
+        kmac.kmacxof256(ka, m, m.length, tPrime, tPrime.length, "PKA".getBytes());
+
+        // accept if, and only if, t’ = t
+        if (Arrays.equals(t, tPrime)) {
+            FileWriter output = new FileWriter(new File("./plaintext.txt"), false);
+            for (int i = 0; i < m.length; i++) {
+                output.append((char) m[i]);
+            }
+            output.close();
+            System.out.println("Decrypted file stored at ./plaintext.txt");
+        } else {
+            System.out.println("The passphrase is incorrect.");
+        }
     }
 
     private static void encryptTextEllipticKey(Scanner userInput) throws IOException {
@@ -599,8 +682,8 @@ public class Driver {
 
         //Z
         BigInteger publicKey = z.x;
-        publicKey.shiftLeft(1);
-        if (z.y.testBit(0)) publicKey.add(BigInteger.ONE);
+        publicKey = publicKey.shiftLeft(1);
+        if (z.y.testBit(0)) publicKey = publicKey.add(BigInteger.ONE);
         byte[] pkTempArr = publicKey.toByteArray();
         byte[] pkArr = new byte[66];
         for (i = 0; i < pkTempArr.length; i++) {
