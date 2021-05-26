@@ -902,23 +902,27 @@ public class Driver {
 //            System.out.println("FIPS 202 / SHA3 Self-Tests OK!\n");
         //test_speed();
         Scanner userInput = new Scanner(System.in);
-        System.out.println("1) KMACXOF256 functionality");
-        System.out.println("2) ECHDIES encryption/Schnorr signature functionality");
-        System.out.println("Select an option: ");
-        String in = userInput.next();
-        while (!in.matches("[12]")) {
-            System.out.println("Please select a valid option (enter 1 or 2)");
+        String in;
+        do {
+            System.out.println("1) KMACXOF256 functionality");
+            System.out.println("2) ECHDIES encryption/Schnorr signature functionality");
+            System.out.println("3) Quit program");
+            System.out.print("Select an option: ");
             in = userInput.next();
-        }
-        int selection = Integer.parseInt(in);
-        switch (selection) {
-            case 1:
-                kmacFunctions(userInput);
-                break;
-            case 2:
-                eccFunctions(userInput);
-                break;
-        }
+            while (!in.matches("[123]")) {
+                System.out.println("Please select a valid option (enter 1 or 2)");
+                in = userInput.next();
+            }
+            int selection = Integer.parseInt(in);
+            switch (selection) {
+                case 1:
+                    kmacFunctions(userInput);
+                    break;
+                case 2:
+                    eccFunctions(userInput);
+                    break;
+            }
+        } while (!in.equals("3"));
     }
 
     private static byte stringToByte(String byteString) {
