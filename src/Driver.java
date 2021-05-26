@@ -399,7 +399,7 @@ public class Driver {
         String key = userInput.next();
         KMACXOF256 kmac = new KMACXOF256();
         kmac.kmacxof256(key.getBytes(), new byte[0], 0, sArr, sArr.length, "K".getBytes());
-        BigInteger s = new BigInteger(sArr);
+        BigInteger s = new BigInteger(1, sArr);
         s = s.multiply(BigInteger.valueOf(4));
         ECPoint v = ECPoint.g.multiply(s);
         FileWriter output = new FileWriter(new File("./elliptickey.txt"), false);
@@ -428,17 +428,17 @@ public class Driver {
         String key = "";
         BufferedReader br = new BufferedReader(new FileReader(keyPath));
         StringBuilder sb = new StringBuilder();
-        String line = br.readLine();
-        while (line != null) {
-            sb.append(line);
-            line = br.readLine();
-        }
-        key = sb.toString();
+        key = br.readLine(); //prevent encrypted private key from getting added to public key var
+//        while (line != null) {
+//            sb.append(line);
+//            line = br.readLine();
+//        }
+//        key = sb.toString();
 
         // k<-random(512);
         byte[] kArray = new byte[64];
         rand.nextBytes(kArray);
-        BigInteger k = new BigInteger(kArray);
+        BigInteger k = new BigInteger(1, kArray);
 
         //k<-4k
         k = k.multiply(BigInteger.valueOf(4));
@@ -451,7 +451,7 @@ public class Driver {
                     + Character.digit(key.charAt(i+1), 16));
         }
         byte[] temp = data;
-        BigInteger x = new BigInteger(temp);
+        BigInteger x = new BigInteger(1, temp);
         boolean y = x.testBit(0);
         x = x.shiftRight(1);
         ECPoint v = new ECPoint(x, y);
@@ -561,7 +561,7 @@ public class Driver {
 //                    + Character.digit(key.charAt(i+1), 16));
 //        }
 //        byte[] temp = data;
-        BigInteger x = new BigInteger(z);
+        BigInteger x = new BigInteger(1, z);
         boolean y = x.testBit(0);
         x = x.shiftRight(1);
         ECPoint Z = new ECPoint(x, y); // The ending point
@@ -573,7 +573,7 @@ public class Driver {
         kmac.kmacxof256(key.getBytes(), new byte[0], 0, sArr, sArr.length, "K".getBytes());
 
         // s <- 4s
-        BigInteger s = new BigInteger(sArr);
+        BigInteger s = new BigInteger(1, sArr);
         s = s.multiply(BigInteger.valueOf(4));
 
         // W <- s*Z
@@ -628,7 +628,7 @@ public class Driver {
         // k<-random(512);
         byte[] kArray = new byte[64];
         rand.nextBytes(kArray);
-        BigInteger k = new BigInteger(kArray);
+        BigInteger k = new BigInteger(1, kArray);
 
         //k<-4k
         k = k.multiply(BigInteger.valueOf(4));
@@ -641,7 +641,7 @@ public class Driver {
                     + Character.digit(key.charAt(i+1), 16));
         }
         byte[] temp = data;
-        BigInteger x = new BigInteger(temp);
+        BigInteger x = new BigInteger(1, temp);
         boolean y = x.testBit(0);
         x = x.shiftRight(1);
         ECPoint v = new ECPoint(x, y);
@@ -703,7 +703,7 @@ public class Driver {
     }
 
     private static void signFile(Scanner userInput) throws IOException {
-        System.out.print("Please enter the filepath for the file to be encrypted: ");
+        System.out.print("Please enter the filepath for the file to be signed: ");
         String filePath = userInput.next();
         System.out.print("Please enter the passphrase: ");
         String key = userInput.next();
@@ -713,7 +713,7 @@ public class Driver {
         byte[] sArr= new byte[64];
         byte[] kArr= new byte[64];
         kmac.kmacxof256(key.getBytes(), new byte[0], 0, sArr, sArr.length, "K".getBytes());
-        BigInteger s = new BigInteger(sArr);
+        BigInteger s = new BigInteger(1, sArr);
         //s<-4s
         s = s.multiply(BigInteger.valueOf(4));
 
@@ -740,7 +740,7 @@ public class Driver {
             }
         }
         kmac.kmacxof256(s.toByteArray(), fileArray, fileArray.length, kArr, kArr.length, "N".getBytes());
-        BigInteger k = new BigInteger(kArr);
+        BigInteger k = new BigInteger(1,  kArr);
 
         //k<-4k
         k = k.multiply(BigInteger.valueOf(4));
@@ -750,20 +750,92 @@ public class Driver {
         //h<-KMAXCOF256(Ux,m,512,"T");
         byte[] hArr=new byte[64];
         kmac.kmacxof256(u.x.toByteArray(), fileArray, fileArray.length, hArr, hArr.length, "T".getBytes());
-        BigInteger h = new BigInteger(hArr);
+        BigInteger h = new BigInteger(1, hArr);
 
         //z<-(k-hs)mod r
         BigInteger z = k.subtract(h.multiply(s)).mod(ECPoint.r);
-
+        System.out.println(z.bitLength());
         //signature:(h,z);
         FileWriter output = new FileWriter(new File("./signature.txt"), false);
-        output.append(bytesToHex(h.toByteArray())+"\n");
+        output.append(bytesToHex(hArr)+"\n");
         output.append(bytesToHex(z.toByteArray()));
         output.close();
     }
 
-    private static void verifySignature(Scanner userInput) {
-        throw new UnsupportedOperationException("Verifying signatures not yet supported");
+    private static void verifySignature(Scanner userInput) throws FileNotFoundException {
+        System.out.print("Enter the filepath for the signed data file: ");
+        String dataFilePath = userInput.next();
+        System.out.print("Enter the filepath for the signature: ");
+        String signaturePath = userInput.next();
+        System.out.print("Enter the filepath for the public key: ");
+        String keyPath = userInput.next();
+        Scanner dataFile = new Scanner(new File(dataFilePath));
+        int dataFileLength = 0;
+        while (dataFile.hasNextLine()) {
+            dataFileLength += dataFile.nextLine().length();
+            if (dataFile.hasNext()) dataFileLength++;
+        }
+
+        byte[] dataFileArray = new byte[dataFileLength];
+        int i = 0;
+        dataFile = new Scanner(new File(dataFilePath));
+        while (dataFile.hasNextLine()) {
+            String line = dataFile.nextLine();
+            for (int j = 0; j < line.length(); j++) {
+                dataFileArray[i] = (byte) line.charAt(j);
+                i++;
+            }
+            if (dataFile.hasNext()) {
+                dataFileArray[i] = (byte) '\n';
+                i++;
+            }
+        }
+
+        Scanner signatureFile = new Scanner(new File(signaturePath));
+
+        String hString = signatureFile.nextLine();
+        byte[] hArray = new byte[hString.length() / 2];
+
+        for (int j = 0; j < hString.length(); j+=2) {
+            hArray[j / 2] = (byte) ((Character.digit(hString.charAt(j), 16) << 4)
+                    + Character.digit(hString.charAt(j+1), 16));
+        }
+
+        String zString = signatureFile.nextLine();
+        byte[] zArray = new byte[zString.length() / 2];
+        for (int j = 0; j < zString.length(); j+=2) {
+            zArray[j / 2] = (byte) ((Character.digit(zString.charAt(j), 16) << 4)
+                    + Character.digit(zString.charAt(j+1), 16));
+        }
+
+        Scanner keyFile = new Scanner(new File(keyPath));
+        String pkString = keyFile.nextLine();
+        byte[] pkArray = new byte[pkString.length() / 2];
+        for (int j = 0; j < pkString.length(); j+=2) {
+            pkArray[j/2] = (byte) ((Character.digit(pkString.charAt(j), 16) << 4)
+                    + Character.digit(pkString.charAt(j+1), 16));
+        }
+
+        BigInteger z = new BigInteger(1, zArray);
+        BigInteger h = new BigInteger(1,hArray);
+
+        BigInteger x = new BigInteger(1,pkArray);
+        boolean y = x.testBit(0);
+        x = x.shiftRight(1);
+        ECPoint v = new ECPoint(x, y);
+
+        ECPoint u = ECPoint.g.multiply(z).add(v.multiply(h));
+
+        KMACXOF256 kmac = new KMACXOF256();
+        byte[] hPrime = new byte[64];
+        kmac.kmacxof256(u.x.toByteArray(), dataFileArray, dataFileArray.length, hPrime, hPrime.length, "T".getBytes());
+
+        if (Arrays.equals(hArray, hPrime)) {
+            System.out.println("The signature has been verified.");
+        } else {
+            System.out.println("The signature is incorrect for the given data file.");
+        }
+
     }
 
     private static void eccFunctions(Scanner userInput) throws IOException {
