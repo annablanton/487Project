@@ -413,14 +413,21 @@ public class Driver {
         }
         output.append(bytesToHex(pkArr));
         output.close();
+
+        encryptTextEllipticKey(bytesToHex(s.toByteArray()), "./elliptickey.txt", "./privatekey.txt");
+
+
+
+
         System.out.println("522-bit public key written to ./elliptickey.txt");
         System.out.println("LSB is equal to LSB of y-coordinate; remaining 521 bits are equal to the x-coordinate left-shifted by one bit");
 
         System.out.println("Private key is " + bytesToHex(s.toByteArray()));
-        System.out.println("Do not lose or share this private key!");
+        System.out.println("Do not share this private key!");
+        System.out.println("Encrypted private key also written to ./privatekey.txt");
     }
 
-    private static void encryptFileEllipticKey(String filePath, String keyPath) throws IOException {
+    private static void encryptFileEllipticKey(String filePath, String keyPath, String outputName) throws IOException {
         String key = "";
         BufferedReader br = new BufferedReader(new FileReader(keyPath));
         StringBuilder sb = new StringBuilder();
@@ -512,7 +519,7 @@ public class Driver {
         }
 
         //cryptogram:(Z,c,t);
-        FileWriter output = new FileWriter(new File("./cryptogram.txt"), false);
+        FileWriter output = new FileWriter(new File(outputName), false);
         output.append(bytesToHex(pkArr) + "\n");
         output.append(bytesToHex(c)+"\n");
         output.append(bytesToHex(t));
@@ -606,11 +613,7 @@ public class Driver {
         }
     }
 
-    private static void encryptTextEllipticKey(Scanner userInput) throws IOException {
-        System.out.print("Please enter the text to be encrypted: ");
-        String text = userInput.next();
-        System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
-        String keyPath = userInput.next();
+    private static void encryptTextEllipticKey(String text, String keyPath, String outputPath) throws IOException {
         String key = "";
         BufferedReader br = new BufferedReader(new FileReader(keyPath));
         StringBuilder sb = new StringBuilder();
@@ -661,9 +664,8 @@ public class Driver {
         int i = 0;
         int textlength = text.length();
         byte[] textArray = new byte[textlength];
-        for (i =0; i<text.length()-1; i++){
+        for (i =0; i<text.length(); i++){
             textArray[i] = (byte) text.charAt(i);
-            i++;
         }
 
         //c<-KMACXOF256
@@ -687,7 +689,7 @@ public class Driver {
         }
 
         //cryptogram:(Z,c,t);
-        FileWriter output = new FileWriter(new File("./cryptogram.txt"), false);
+        FileWriter output = new FileWriter(new File(outputPath), false);
         output.append(bytesToHex(pkArr) + "\n");
         output.append(bytesToHex(c)+"\n");
         output.append(bytesToHex(t));
@@ -854,13 +856,21 @@ public class Driver {
                 String filePath = userInput.next();
                 System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
                 String keyPath = userInput.next();
-                encryptFileEllipticKey(filePath, keyPath);
+                encryptFileEllipticKey(filePath, keyPath, "./cryptogram.txt");
+                System.out.println("Cryptogram written to ./cryptogram.txt");
                 break;
             case 3:
                 decryptEllipticFile(userInput);
                 break;
             case 4:
-                encryptTextEllipticKey(userInput);
+                System.out.println("Please enter the text to be encrypted: ");
+                userInput.nextLine();
+                String text = userInput.nextLine();
+                System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
+                userInput.nextLine();
+                keyPath = userInput.nextLine();
+                encryptTextEllipticKey(text, keyPath, "./cryptogram.txt");
+                System.out.println("Cryptogram written to ./cryptogram.txt");
                 break;
             case 5:
                 decryptEllipticText(userInput);
@@ -871,6 +881,7 @@ public class Driver {
                 System.out.print("Please enter the passphrase: ");
                 String key = userInput.next();
                 signFile(filePath, key);
+                System.out.println("Signature written to ./signature.txt");
                 break;
             case 7:
                 verifySignature(userInput);
@@ -882,7 +893,7 @@ public class Driver {
                 String publicKeyPath = userInput.next();
                 System.out.println("Please enter your passphrase: ");
                 key = userInput.next();
-                encryptFileEllipticKey(filePath, publicKeyPath);
+                encryptFileEllipticKey(filePath, publicKeyPath, "./cryptogram.txt");
                 signFile("./cryptogram.txt", key);
                 System.out.println("Cryptogram written to ./cryptogram.txt");
                 System.out.println("Signature written to ./signature.txt");
