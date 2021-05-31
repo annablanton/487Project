@@ -420,11 +420,7 @@ public class Driver {
         System.out.println("Do not lose or share this private key!");
     }
 
-    private static void encryptFileEllipticKey(Scanner userInput) throws IOException {
-        System.out.print("Please enter the filepath for the file to be encrypted: ");
-        String filePath = userInput.next();
-        System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
-        String keyPath = userInput.next();
+    private static void encryptFileEllipticKey(String filePath, String keyPath) throws IOException {
         String key = "";
         BufferedReader br = new BufferedReader(new FileReader(keyPath));
         StringBuilder sb = new StringBuilder();
@@ -702,11 +698,7 @@ public class Driver {
         throw new UnsupportedOperationException("Decrypting elliptic-encrypted text not yet supported");
     }
 
-    private static void signFile(Scanner userInput) throws IOException {
-        System.out.print("Please enter the filepath for the file to be signed: ");
-        String filePath = userInput.next();
-        System.out.print("Please enter the passphrase: ");
-        String key = userInput.next();
+    private static void signFile(String filePath, String key) throws IOException {
 
         //s<-KMACXOF256(pw,"",512,"k")
         KMACXOF256 kmac = new KMACXOF256();
@@ -754,7 +746,6 @@ public class Driver {
 
         //z<-(k-hs)mod r
         BigInteger z = k.subtract(h.multiply(s)).mod(ECPoint.r);
-        System.out.println(z.bitLength());
         //signature:(h,z);
         FileWriter output = new FileWriter(new File("./signature.txt"), false);
         output.append(bytesToHex(hArr)+"\n");
@@ -846,9 +837,10 @@ public class Driver {
         System.out.println("5) Decrypt given elliptic-encrypted text from passphrase");
         System.out.println("6) Sign file from passphrase and write signature to file");
         System.out.println("7) Verify given data file and its signature file under a public key file");
+        System.out.println("8) Encrypt data file under recipient's public key and sign data file under your own private key");
         System.out.print("Select an option: ");
         String in = userInput.next();
-        while (!in.matches("[1-7]")) {
+        while (!in.matches("[1-8]")) {
             System.out.println("Please select a valid option (enter a number 1-7)");
             in = userInput.next();
         }
@@ -858,7 +850,11 @@ public class Driver {
                 generateEllipticKeyPair(userInput);
                 break;
             case 2:
-                encryptFileEllipticKey(userInput);
+                System.out.print("Please enter the filepath for the file to be encrypted: ");
+                String filePath = userInput.next();
+                System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
+                String keyPath = userInput.next();
+                encryptFileEllipticKey(filePath, keyPath);
                 break;
             case 3:
                 decryptEllipticFile(userInput);
@@ -870,11 +866,26 @@ public class Driver {
                 decryptEllipticText(userInput);
                 break;
             case 6:
-                signFile(userInput);
+                System.out.print("Please enter the filepath for the file to be signed: ");
+                filePath = userInput.next();
+                System.out.print("Please enter the passphrase: ");
+                String key = userInput.next();
+                signFile(filePath, key);
                 break;
             case 7:
                 verifySignature(userInput);
                 break;
+            case 8:
+                System.out.print("Please enter the filepath for the file to be encrypted/signed: ");
+                filePath = userInput.next();
+                System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
+                String publicKeyPath = userInput.next();
+                System.out.println("Please enter your passphrase: ");
+                key = userInput.next();
+                encryptFileEllipticKey(filePath, publicKeyPath);
+                signFile("./cryptogram.txt", key);
+                System.out.println("Cryptogram written to ./cryptogram.txt");
+                System.out.println("Signature written to ./signature.txt");
         }
     }
 
