@@ -1,4 +1,15 @@
-import java.util.Arrays;
+/**
+ * 06/04/2021
+ * TCSS 487 A Sp 21: Cryptography
+ * Group Project –cryptographic library & app
+ * Anna Blanton, Caleb Chang and Taehong Kim
+ *
+ * References:
+ * Based on NIST Special Publication 800-185 document
+ * SHA-3 Derived Functions by John Kelsey, Shu-jen Chang, Ray Perlner
+ * cSHAKE256
+ * https://dx.doi.org/10.6028/NIST.SP.800-185
+ */
 
 public class cSHAKE256 extends SHAKE {
     byte[] cshake256(byte[] in, int inlen, byte[] md, int mdlen, byte[] n, byte[] s) {
