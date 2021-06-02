@@ -99,6 +99,7 @@ public class Driver {
         return fails;
     }
 
+    /*Test method converted from tiny SHA3 C implementation here: https://github.com/mjosaarinen/tiny_sha3*/
     static int test_shake()
     {
         // Test vectors have bytes 480..511 of XOF output for given inputs.
@@ -154,35 +155,6 @@ public class Driver {
         return fails;
     }
 
-// test speed of the comp
-
-//    static void test_speed()
-//    {
-//        int i;
-//        long[/*25*/] st, x, n;
-//        clock_t bg, us;
-//
-//        for (i = 0; i < 25; i++)
-//            st[i] = i;
-//
-//        bg = clock();
-//        n = 0;
-//        do {
-//            for (i = 0; i < 100000; i++)
-//                sha3_keccakf(st);
-//            n += i;
-//            us = clock() - bg;
-//        } while (us < 3 * CLOCKS_PER_SEC);
-//
-//        x = 0;
-//        for (i = 0; i < 25; i++)
-//            x += st[i];
-//
-//        printf("(%016lX) %.3f Keccak-p[1600,24] / Second.\n",
-//                (unsigned long) x, (CLOCKS_PER_SEC * ((double) n)) / ((double) us));
-//
-//
-//    }
 
     private static void computeHashOfFile(Scanner userInput) throws FileNotFoundException {
         System.out.print("Please enter the filepath: ");

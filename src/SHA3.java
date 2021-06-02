@@ -39,30 +39,15 @@ public class SHA3 {
         long[] q = new long[25];
         long[] bc = new long[5];
 
-        // variables
-//        int i, j, r;
         long t;
 
-//        #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-//            uint8_t *v;
-        // map from bytes (in v[]) to longs (in q[])
         for (int i = 0, j = 0; i < 25; i++, j += 8) {
             q[i] =  (((long)v[j    ] & 0xFFL)      ) | (((long)v[j + 1] & 0xFFL) <<  8) |
                     (((long)v[j + 2] & 0xFFL) << 16) | (((long)v[j + 3] & 0xFFL) << 24) |
                     (((long)v[j + 4] & 0xFFL) << 32) | (((long)v[j + 5] & 0xFFL) << 40) |
                     (((long)v[j + 6] & 0xFFL) << 48) | (((long)v[j + 7] & 0xFFL) << 56);
         }
-
-        // #endif
         // endianess conversion. this is redundant on little-endian targets
-//            for (i = 0; i < 25; i++) {
-//                v = (uint8_t *) &st[i];
-//                st[i] = ((uint64_t) v[0])     | (((uint64_t) v[1]) << 8) |
-//                        (((uint64_t) v[2]) << 16) | (((uint64_t) v[3]) << 24) |
-//                        (((uint64_t) v[4]) << 32) | (((uint64_t) v[5]) << 40) |
-//                        (((uint64_t) v[6]) << 48) | (((uint64_t) v[7]) << 56);
-//            }
-////        #endif
 
 
         // actual iteration
@@ -98,8 +83,6 @@ public class SHA3 {
             //  Iota
             q[0] ^= keccakf_rndc[r];
         }
-
-//        #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 
         // endianess conversion. this is redundant on little-endian targets
         for (int i = 0, j = 0; i < 25; i++, j += 8) {
@@ -200,20 +183,6 @@ public class SHA3 {
         xArr[n] = n;
         return xArr;
 
-//        String[] oArr = new String[n+1];
-
-//        for (int i = 0; i < n; i++) {
-//            oArr[i] = enc8(xArr[i]);
-//        }
-//
-//        oArr[n] = enc8(n);
-//        String O = "";
-//        for (int i = 0; i < n+1; i++) {
-//            O = O.concat(oArr[i]);
-//        }
-//
-//        return O;
-
     }
 
     public static byte[] left_encode(long x) {
@@ -239,20 +208,6 @@ public class SHA3 {
         }
 
         return xArr;
-
-//        String[] oArr = new String[n+1];
-//
-//        oArr[0] = enc8(n);
-//        for (int i = 0; i < n; i++) {
-//            oArr[i+1] = enc8(xArr[i]);
-//        }
-//
-//        String O = "";
-//        for (int i = 0; i < n+1; i++) {
-//            O = O.concat(oArr[i]);
-//        }
-//
-//        return O;
     }
 
     public static byte[] encode_string(byte[] S) {
@@ -285,17 +240,4 @@ public class SHA3 {
         return ret;
     }
 
-//    private static byte enc8(byte b) {
-//        StringBuilder ret = new StringBuilder();
-//        for (int i = 0; i < 8; i++) {
-//            if (b != 0) {
-//                ret.append(Integer.toString(Math.abs(b % 2)));
-//                b >>>= 1;
-//            } else {
-//                ret.append("0");
-//            }
-//        }
-//
-//        return ret.toString();
-//    }
 }
