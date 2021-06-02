@@ -1,5 +1,12 @@
 import java.math.BigInteger;
-
+/**
+ * 06/04/2021
+ * TCSS 487 A Sp 21: Cryptography
+ * Group Project –cryptographic library & app
+ * Anna Blanton, Caleb Chang and Taehong Kim
+ *
+ * EPoint class to represent a elliptic point
+ */
 public class ECPoint {
     public final BigInteger x;
     public final BigInteger y;
@@ -12,11 +19,21 @@ public class ECPoint {
         y = BigInteger.ONE;
     }
 
+    /**
+     * Constructor for ECPoint object
+     * @param x x-coordinate
+     * @param y y-coordinate
+     */
     public ECPoint(BigInteger x, BigInteger y) {
         this.x = x;
         this.y = y;
     }
 
+    /**
+     * Constructor for ECPoint object
+     * @param x x-coordinate
+     * @param lsb
+     */
     public ECPoint(BigInteger x, boolean lsb) {
         this.x = x;
         BigInteger num = BigInteger.ONE.subtract(x.multiply(x));
@@ -24,6 +41,11 @@ public class ECPoint {
         this.y = sqrt(num.multiply(den).mod(p), p, lsb).mod(p);
     }
 
+    /**
+     * Override equal to compare ec point
+     * @param other ecpoint to compare
+     * @return return boolean result for comparing
+     */
     @Override
     public boolean equals(Object other) {
         if (this.getClass().equals(other.getClass())) {
@@ -33,10 +55,19 @@ public class ECPoint {
         return false;
     }
 
+    /**
+     * setting the negate for ecpoint
+     * @return return negate value for ecpoint
+     */
     public ECPoint negate() {
         return new ECPoint(this.p.subtract(this.x), this.y);
     }
 
+    /**
+     * Add another ECPoint to get a new ECPoint
+     * @param other Another ECPoint
+     * @return new ECPoint
+     */
     public ECPoint add(ECPoint other) {
         BigInteger x1y2 = this.x.multiply(other.y);
         BigInteger y1x2 = this.y.multiply(other.x);
@@ -54,6 +85,11 @@ public class ECPoint {
         return new ECPoint(newX, newY);
     }
 
+    /**
+     * Multiply a ECPoint by a BigInteger
+     * @param s BigInteger
+     * @return new ECPoint
+     */
     public ECPoint multiply(BigInteger s) {
         if (s.bitLength() > 0) {
             ECPoint V = this;
@@ -68,10 +104,21 @@ public class ECPoint {
         return new ECPoint();
     }
 
+    /**
+     * to string to print out ec point
+     * @return x,y of ec point
+     */
     public String toString() {
         return x + ", " + y;
     }
 
+    /**
+     * method to calculate sqrt big integer
+     * @param v big integer for v
+     * @param p big integer for p
+     * @param lsb boolean to distinguish subtract r from p
+     * @return return with sqrt big integer or null if result is 0
+     */
     private BigInteger sqrt(BigInteger v, BigInteger p, boolean lsb) {
         assert(p.testBit(0) && p.testBit(1));
         if (v.signum() == 0) {

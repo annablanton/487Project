@@ -5,7 +5,15 @@ import java.math.BigInteger;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+
+/**
+ * 06/04/2021
+ * TCSS 487 A Sp 21: Cryptography
+ * Group Project –cryptographic library & app
+ * Anna Blanton, Caleb Chang and Taehong Kim
+ *
+ * Test class for ECPoint
+ */
 
 public class ECPointTest {
     ECPoint g;
