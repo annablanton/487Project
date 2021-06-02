@@ -669,7 +669,81 @@ public class Driver {
     }
 
     private static void decryptEllipticText(Scanner userInput) {
-        throw new UnsupportedOperationException("Decrypting elliptic-encrypted text not yet supported");
+        System.out.print("Please enter the passphrase: ");
+        String key = userInput.next();
+
+        System.out.print("Please enter the Z string: ");
+        String zString = userInput.next();
+        System.out.print("Please enter the c string: ");
+        String cString = userInput.next();
+        System.out.print("Please enter the t string: ");
+        String tString = userInput.next();
+        byte[] z = new byte[zString.length() / 2];
+        byte[] c = new byte[cString.length() / 2];
+        byte[] t = new byte[tString.length() / 2];
+
+        for (int i = 0; i < zString.length() / 2; i++) {
+            String byteString = "" + zString.charAt(i * 2) + zString.charAt(i * 2 + 1);
+            z[i] = stringToByte(byteString);
+        }
+
+        for (int i = 0; i < cString.length() / 2; i++) {
+            String byteString = "" + cString.charAt(i * 2) + cString.charAt(i * 2 + 1);
+            c[i] = stringToByte(byteString);
+        }
+
+        for (int i = 0; i < tString.length() / 2; i++) {
+            String byteString = "" + tString.charAt(i * 2) + tString.charAt(i * 2 + 1);
+            t[i] = stringToByte(byteString);
+        }
+
+        BigInteger x = new BigInteger(1,z);
+        boolean y = x.testBit(0);
+        x = x.shiftRight(1);
+        ECPoint Z = new ECPoint(x, y); // The ending point
+
+
+        // s <- KMACXOF256(pw, “”, 512, “K”)
+        byte[] sArr = new byte[64];
+        KMACXOF256 kmac = new KMACXOF256();
+        kmac.kmacxof256(key.getBytes(), new byte[0], 0, sArr, sArr.length, "K".getBytes());
+
+        // s <- 4s
+        BigInteger s = new BigInteger(1, sArr);
+        s = s.multiply(BigInteger.valueOf(4));
+
+        // W <- s*Z
+        ECPoint w = Z.multiply(s);;
+
+
+        // (ke||ka) <- KMACXOF256(W_x,"",1024,"P");
+        byte[] ke_ka = new byte[128];
+        kmac.kmacxof256(w.x.toByteArray(), new byte[]{}, 0, ke_ka, ke_ka.length, "P".getBytes());
+        byte[] ke = Arrays.copyOfRange(ke_ka, 0, 64);
+        byte[] ka = Arrays.copyOfRange(ke_ka, 64, 128);
+
+        // m <- KMACXOF256(ke, “”, |c|,“PKE”) ^ c
+        byte[] m = new byte[c.length];
+        kmac.kmacxof256(ke, new byte[]{}, 0, m, c.length, "PKE".getBytes());
+        for (int i = 0; i < m.length; i++) {
+            m[i] ^= c[i];
+        }
+
+        // t’ <- KMACXOF256(ka, m, 512, “PKA”)
+        byte[] tPrime = new byte[64];
+        kmac.kmacxof256(ka, m, m.length, tPrime, tPrime.length, "PKA".getBytes());
+
+        String result = "";
+        // accept if, and only if, t’ = t
+        if (Arrays.equals(t, tPrime)) {
+            for (int i = 0; i < m.length; i++) {
+                result += (char)m[i];
+            }
+            System.out.println("Decrypted text: " + result);
+        } else {
+            System.out.println("The passphrase is incorrect.");
+        }
+
     }
 
     private static void signFile(String filePath, String key) throws IOException {
