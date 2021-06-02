@@ -97,7 +97,6 @@ public class SHA3 {
             v[j + 6] = (byte)((t >> 48) & 0xFF);
             v[j + 7] = (byte)((t >> 56) & 0xFF);
         }
-//        #endif
     }
 
     // Initialize the context for SHA3

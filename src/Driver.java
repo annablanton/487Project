@@ -374,7 +374,7 @@ public class Driver {
         BigInteger s = new BigInteger(1, sArr);
         s = s.multiply(BigInteger.valueOf(4));
         ECPoint v = ECPoint.g.multiply(s);
-        FileWriter output = new FileWriter(new File("./elliptickey.txt"), false);
+        FileWriter output = new FileWriter(new File("./publickey.txt"), false);
         BigInteger publicKey = v.x;
         publicKey = publicKey.shiftLeft(1);
         if (v.y.testBit(0)) publicKey = publicKey.add(BigInteger.ONE);
@@ -386,12 +386,12 @@ public class Driver {
         output.append(bytesToHex(pkArr));
         output.close();
 
-        encryptTextEllipticKey(bytesToHex(s.toByteArray()), "./elliptickey.txt", "./privatekey.txt");
+        encryptTextEllipticKey(bytesToHex(s.toByteArray()), "./publickey.txt", "./privatekey.txt");
 
 
 
 
-        System.out.println("522-bit public key written to ./elliptickey.txt");
+        System.out.println("522-bit public key written to ./publickey.txt");
         System.out.println("LSB is equal to LSB of y-coordinate; remaining 521 bits are equal to the x-coordinate left-shifted by one bit");
 
         System.out.println("Private key is " + bytesToHex(s.toByteArray()));
@@ -403,12 +403,7 @@ public class Driver {
         String key = "";
         BufferedReader br = new BufferedReader(new FileReader(keyPath));
         StringBuilder sb = new StringBuilder();
-        key = br.readLine(); //prevent encrypted private key from getting added to public key var
-//        while (line != null) {
-//            sb.append(line);
-//            line = br.readLine();
-//        }
-//        key = sb.toString();
+        key = br.readLine();
 
         // k<-random(512);
         byte[] kArray = new byte[64];
