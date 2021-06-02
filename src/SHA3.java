@@ -1,5 +1,16 @@
+/**
+ * 06/04/2021
+ * TCSS 487 A Sp 21: Cryptography
+ * Group Project –cryptographic library & app
+ * Anna Blanton, Caleb Chang and Taehong Kim
+ *
+ * References:
+ * Based on NIST Special Publication 800-185 document
+ * SHA-3 Derived Functions by John Kelsey, Shu-jen Chang, Ray Perlner
+ * cSHAKE256
+ * https://dx.doi.org/10.6028/NIST.SP.800-185
+ */
 public class SHA3 {
-    //SHA-3 implementation converted from C to Java from https://github.com/mjosaarinen/tiny_sha3
     public static final int KECCAKF_ROUNDS = 24;
 
     // state context
@@ -10,7 +21,6 @@ public class SHA3 {
     public static long ROTL64(long x, long y) {
         return (((x) << (y)) | ((x) >>> (64 - (y))));
     }
-
 
     private static final long[/*24*/] keccakf_rndc = {
             0x0000000000000001L, 0x0000000000008082L, 0x800000000000808aL,
@@ -31,23 +41,33 @@ public class SHA3 {
             15, 23, 19, 13, 12, 2, 20, 14, 22, 9,  6,  1
     };
 
+    /**
+     * Rotate the 64-bit long value x by y positions to the left
+     * @param x 64-bit long value
+     * @param y left rotation displacement
+     * @return 64-bit long value x left-rotated by y position
+     */
     public static long ROTL64(long x, int y) {
         return (x << y) | (x >>> (64 - (y)));
     }
 
+    /**
+     * Apply the Keccak-f permutation to the byte-oriented state buffer v.
+     * @param v
+     */
     protected static void sha3_keccakf(byte[/*200*/] v){
         long[] q = new long[25];
         long[] bc = new long[5];
 
         long t;
 
+        // map from bytes (in v[]) to longs (in q[]).
         for (int i = 0, j = 0; i < 25; i++, j += 8) {
             q[i] =  (((long)v[j    ] & 0xFFL)      ) | (((long)v[j + 1] & 0xFFL) <<  8) |
                     (((long)v[j + 2] & 0xFFL) << 16) | (((long)v[j + 3] & 0xFFL) << 24) |
                     (((long)v[j + 4] & 0xFFL) << 32) | (((long)v[j + 5] & 0xFFL) << 40) |
                     (((long)v[j + 6] & 0xFFL) << 48) | (((long)v[j + 7] & 0xFFL) << 56);
         }
-        // endianess conversion. this is redundant on little-endian targets
 
 
         // actual iteration
@@ -84,9 +104,8 @@ public class SHA3 {
             q[0] ^= keccakf_rndc[r];
         }
 
-        // endianess conversion. this is redundant on little-endian targets
+        // Mapping from longs (in q[]) to bytes (in v[])
         for (int i = 0, j = 0; i < 25; i++, j += 8) {
-
             t = q[i];
             v[j    ] = (byte)(t & 0xFF);
             v[j + 1] = (byte)((t >> 8) & 0xFF);
@@ -100,7 +119,6 @@ public class SHA3 {
     }
 
     // Initialize the context for SHA3
-
     void sha3_init(int mdlen)
     {
         int i;
@@ -113,7 +131,6 @@ public class SHA3 {
     }
 
     // update state with more data
-
     void sha3_update(byte[] data, int len)
     {
         int i;
@@ -131,7 +148,6 @@ public class SHA3 {
     }
 
     // finalize and output a hash
-
     void sha3_final(byte[] md)
     {
         int i;
@@ -146,7 +162,6 @@ public class SHA3 {
     }
 
     // compute a SHA-3 hash (md) of given byte length from "in"
-
     byte[] sha3(byte[] in, int inlen, byte[] md, int mdlen)
     {
 
@@ -156,8 +171,6 @@ public class SHA3 {
 
         return md;
     }
-
-
 
     public static byte[] right_encode(long x) {
         byte n;
@@ -181,7 +194,6 @@ public class SHA3 {
         }
         xArr[n] = n;
         return xArr;
-
     }
 
     public static byte[] left_encode(long x) {
@@ -210,10 +222,15 @@ public class SHA3 {
     }
 
     public static byte[] encode_string(byte[] S) {
-
         return concat(left_encode(S.length * 8), S);
     }
 
+    /**
+     * Apply the NIST bytepad primitive to a byte array X with encoding factor w.
+     * @param X the byte array to bytepad
+     * @param w the encoding factor (the output length must be a multiple of w)
+     * @return the byte-padded byte array X with encoding factor w.
+     */
     public static byte[] bytepad(byte[] X, int w) {
         byte[] wenc = left_encode(w);
         byte[] z = new byte[wenc.length + X.length + w - ((wenc.length + X.length) % w)];
@@ -226,6 +243,13 @@ public class SHA3 {
 
         return z;
     }
+
+    /**
+     * Concatenate two byte array
+     * @param a byte array
+     * @param b byte array
+     * @return new concatenated byte array
+     */
     private static byte[] concat(byte[] a, byte[] b) {
         byte[] ret = new byte[a.length + b.length];
         int i;
@@ -238,5 +262,4 @@ public class SHA3 {
         }
         return ret;
     }
-
 }
