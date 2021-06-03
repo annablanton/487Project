@@ -87,6 +87,7 @@ public class Driver {
                 break;
             case 3:
                 encryptFile(userInput);
+                System.out.println("Cryptogram written to ./cryptogram.txt");1
                 break;
             case 4:
                 decryptFile(userInput);
