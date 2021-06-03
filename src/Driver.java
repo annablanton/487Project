@@ -138,8 +138,7 @@ public class Driver {
                 userInput.nextLine();
                 String text = userInput.nextLine();
                 System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
-                userInput.nextLine();
-                keyPath = userInput.nextLine();
+                keyPath = userInput.next();
                 encryptTextEllipticKey(text, keyPath, "./cryptogram.txt");
                 System.out.println("Cryptogram written to ./cryptogram.txt");
                 break;
@@ -385,7 +384,7 @@ public class Driver {
         BigInteger s = new BigInteger(1, sArr);
         s = s.multiply(BigInteger.valueOf(4));
         ECPoint v = ECPoint.g.multiply(s);
-        FileWriter output = new FileWriter(new File("./elliptickey.txt"), false);
+        FileWriter output = new FileWriter(new File("./publickey.txt"), false);
         BigInteger publicKey = v.x;
         publicKey = publicKey.shiftLeft(1);
         if (v.y.testBit(0)) publicKey = publicKey.add(BigInteger.ONE);
@@ -396,9 +395,8 @@ public class Driver {
         }
         output.append(bytesToHex(pkArr));
         output.close();
-
-        encryptTextEllipticKey(bytesToHex(s.toByteArray()), "./elliptickey.txt", "./privatekey.txt");
-        System.out.println("522-bit public key written to ./elliptickey.txt");
+        encryptTextEllipticKey(bytesToHex(s.toByteArray()), "./publickey.txt", "./privatekey.txt");
+        System.out.println("522-bit public key written to ./publickey.txt");
         System.out.println("LSB is equal to LSB of y-coordinate; remaining 521 bits are equal to the x-coordinate left-shifted by one bit");
         System.out.println("Private key is " + bytesToHex(s.toByteArray()));
         System.out.println("Do not share this private key!");

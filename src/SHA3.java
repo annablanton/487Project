@@ -69,6 +69,7 @@ public class SHA3 {
                     (((long)v[j + 6] & 0xFFL) << 48) | (((long)v[j + 7] & 0xFFL) << 56);
         }
 
+
         // actual iteration
         for (int r = 0; r < KECCAKF_ROUNDS; r++) {
 
