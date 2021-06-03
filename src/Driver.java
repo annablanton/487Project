@@ -138,8 +138,7 @@ public class Driver {
                 userInput.nextLine();
                 String text = userInput.nextLine();
                 System.out.print("Please enter the filepath for the (Schnorr/ECDHIES) public key : ");
-                userInput.nextLine();
-                keyPath = userInput.nextLine();
+                keyPath = userInput.next();
                 encryptTextEllipticKey(text, keyPath, "./cryptogram.txt");
                 System.out.println("Cryptogram written to ./cryptogram.txt");
                 break;
